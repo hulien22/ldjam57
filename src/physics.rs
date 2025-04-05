@@ -116,23 +116,19 @@ fn on_ball_hit(
     collider: &Collider,
     commands: &mut Commands,
 ) {
-    info!(
-        "ball hit {:?} velocity: {:?} previous_velocity: {:?}",
-        entity, velocity.linvel, previous_velocity.linvel
-    );
+    // info!(
+    //     "ball hit {:?} velocity: {:?} previous_velocity: {:?}",
+    //     entity, velocity.linvel, previous_velocity.linvel
+    // );
 
     if velocity.linvel.length_squared() < previous_velocity.linvel.length_squared() {
         // balls are not allowed to slow down
-        velocity.linvel = previous_velocity.linvel;
+        velocity.linvel = velocity.linvel.normalize() * previous_velocity.linvel.length();
     }
     // TODO handle speed increasing here instead of using Restitution
 
     const MAX_VELOCITY: f32 = 500.0;
     if velocity.linvel.length_squared() > MAX_VELOCITY * MAX_VELOCITY {
-        println!(
-            "clamped ball velocity: {}",
-            velocity.linvel.length_squared()
-        );
         velocity.linvel = velocity.linvel.normalize() * MAX_VELOCITY;
     }
 
