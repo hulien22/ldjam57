@@ -43,7 +43,7 @@ fn spawn_paddle(mut commands: Commands) {
     commands.spawn((
         Paddle,
         Sprite::from_color(Color::srgb(1.0, 0.0, 0.0), Vec2 { x: 10.0, y: 3.0 }),
-        Transform::from_xyz(0.0, -10.0, 0.0),
+        Transform::from_xyz(0.0, 30.0, 0.0),
         Collider::cuboid(5.0, 1.5),
         RigidBody::KinematicPositionBased,
         KinematicCharacterController::default(),

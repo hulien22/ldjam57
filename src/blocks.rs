@@ -11,13 +11,31 @@ impl Plugin for BlocksPlugin {
     }
 }
 
+const BLOCK_SIZE: f32 = 10.0;
+const BLOCK_COUNT_WIDTH: usize = 40;
+const BLOCK_GAP_SIZE: f32 = 2.0;
+const BLOCK_GROUP_OFFSET: f32 =
+    (BLOCK_SIZE * BLOCK_COUNT_WIDTH as f32 + BLOCK_GAP_SIZE * (BLOCK_COUNT_WIDTH - 1) as f32) / 2.0;
+
 fn spawn_blocks(mut commands: Commands) {
-    for i in 0..20 {
-        for j in 0..20 {
+    for i in 0..BLOCK_COUNT_WIDTH {
+        for j in 0..BLOCK_COUNT_WIDTH {
             commands.spawn((
-                Sprite::from_color(Color::srgb(0.5, 0.5 as f32, 0.2), Vec2 { x: 10.0, y: 10.0 }),
-                Transform::from_xyz(i as f32 * 11.0, j as f32 * 11.0, 0.0),
-                Collider::cuboid(5.0, 5.0),
+                Sprite::from_color(
+                    Color::srgb(0.5, 0.5 as f32, 0.2),
+                    Vec2 {
+                        x: BLOCK_SIZE,
+                        y: BLOCK_SIZE,
+                    },
+                ),
+                Transform::from_xyz(
+                    -BLOCK_GROUP_OFFSET
+                        + j as f32 * (BLOCK_SIZE + BLOCK_GAP_SIZE)
+                        + BLOCK_SIZE / 2.0,
+                    i as f32 * -(BLOCK_SIZE + BLOCK_GAP_SIZE) + BLOCK_SIZE / 2.0,
+                    0.0,
+                ),
+                Collider::cuboid(BLOCK_SIZE / 2.0, BLOCK_SIZE / 2.0),
                 RigidBody::Fixed,
                 GravityScale(0.0),
                 Block,
@@ -27,6 +45,17 @@ fn spawn_blocks(mut commands: Commands) {
             ));
         }
     }
+    commands.spawn((
+        Transform::from_xyz(BLOCK_GROUP_OFFSET, 0.0, 0.0),
+        RigidBody::Fixed,
+        Collider::halfspace(Vec2 { x: -1.0, y: 0.0 }).unwrap(),
+    ));
+
+    commands.spawn((
+        Transform::from_xyz(-BLOCK_GROUP_OFFSET, 0.0, 0.0),
+        RigidBody::Fixed,
+        Collider::halfspace(Vec2 { x: 1.0, y: 0.0 }).unwrap(),
+    ));
 }
 
 #[derive(Component, Debug, Clone, Copy)]
