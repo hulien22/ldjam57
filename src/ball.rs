@@ -11,12 +11,30 @@ pub struct BallPlugin;
 impl Plugin for BallPlugin {
     fn build(&self, app: &mut App) {
         // app.add_systems(OnEnter(AppState::Game), spawn_blocks);
-        app.add_systems(FixedUpdate, clamp_balls);
+        // app.add_systems(FixedUpdate, clamp_balls);
     }
 }
 
 #[derive(Component)]
-struct Ball;
+pub struct Ball;
+
+#[derive(Component)]
+#[require(Velocity)]
+pub struct PreviousVelocity {
+    pub linvel: Vec2,
+}
+
+impl PreviousVelocity {
+    pub fn new(velocity: &Velocity) -> Self {
+        Self {
+            linvel: velocity.linvel,
+        }
+    }
+
+    pub fn zero() -> Self {
+        Self { linvel: Vec2::ZERO }
+    }
+}
 
 pub fn spawn_ball(mut commands: Commands, transform: Transform) {
     commands.spawn((
@@ -46,19 +64,20 @@ pub fn spawn_ball(mut commands: Commands, transform: Transform) {
         StateScoped(AppState::Game),
         Name::new("Ball"),
         Velocity::linear(Vec2::new(0.0, -100.0)),
+        PreviousVelocity::zero(),
     ));
 }
 
-// todo move this to collisions, and perhaps modify physics so we never slow down?
-fn clamp_balls(mut query: Query<&mut Velocity, With<Ball>>) {
-    const MAX_VELOCITY: f32 = 500.0;
-    for mut velocity in query.iter_mut() {
-        if velocity.linvel.length_squared() > MAX_VELOCITY * MAX_VELOCITY {
-            println!(
-                "clamped ball velocity: {}",
-                velocity.linvel.length_squared()
-            );
-            velocity.linvel = velocity.linvel.normalize() * MAX_VELOCITY;
-        }
-    }
-}
+// // todo move this to collisions, and perhaps modify physics so we never slow down?
+// fn clamp_balls(mut query: Query<&mut Velocity, With<Ball>>) {
+//     const MAX_VELOCITY: f32 = 500.0;
+//     for mut velocity in query.iter_mut() {
+//         // if velocity.linvel.length_squared() > MAX_VELOCITY * MAX_VELOCITY {
+//         //     println!(
+//         //         "clamped ball velocity: {}",
+//         //         velocity.linvel.length_squared()
+//         //     );
+//         //     velocity.linvel = velocity.linvel.normalize() * MAX_VELOCITY;
+//         // }
+//     }
+// }
