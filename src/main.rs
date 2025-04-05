@@ -17,6 +17,7 @@ fn main() {
         .add_plugins(BlocksPlugin)
         .add_systems(Startup, setup_camera)
         .init_state::<AppState>()
+        .enable_state_scoped_entities::<AppState>()
         .run();
 }
 
