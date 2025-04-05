@@ -4,9 +4,11 @@ use bevy::{
     prelude::*,
 };
 use blocks::BlocksPlugin;
+use paddle::PaddlePlugin;
 
 mod app_state;
 mod blocks;
+mod paddle;
 
 fn main() {
     App::new()
@@ -15,6 +17,7 @@ fn main() {
             ..Default::default()
         }))
         .add_plugins(BlocksPlugin)
+        .add_plugins(PaddlePlugin)
         .add_systems(Startup, setup_camera)
         .init_state::<AppState>()
         .enable_state_scoped_entities::<AppState>()
