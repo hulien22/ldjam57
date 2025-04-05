@@ -1,11 +1,12 @@
 use bevy::{math::VectorSpace, prelude::*};
 use bevy_rapier2d::prelude::{
-    ActiveCollisionTypes, ActiveEvents, Collider, CollisionEvent, ExternalImpulse, GravityScale,
-    KinematicCharacterController, LockedAxes, RigidBody, Velocity,
+    ActiveCollisionTypes, ActiveEvents, Collider, ColliderMassProperties, CollisionEvent,
+    ExternalImpulse, Friction, GravityScale, KinematicCharacterController, LockedAxes, Restitution,
+    RigidBody, Velocity,
 };
 use leafwing_input_manager::{input_map, prelude::*};
 
-use crate::app_state::AppState;
+use crate::{app_state::AppState, ball::spawn_ball};
 
 pub struct PaddlePlugin;
 
@@ -48,6 +49,9 @@ fn spawn_paddle(mut commands: Commands) {
         RigidBody::Dynamic,
         // KinematicCharacterController::default(),
         GravityScale(0.0),
+        ColliderMassProperties::Density(10.0),
+        Friction::coefficient(1.0),
+        Restitution::coefficient(2.0),
         ActiveCollisionTypes::all(),
         ActiveEvents::COLLISION_EVENTS,
         StateScoped(AppState::Game),
@@ -61,6 +65,7 @@ fn spawn_paddle(mut commands: Commands) {
 fn move_paddle(
     mut query: Query<(&ActionState<PaddleAction>, &mut Transform, &mut Velocity), With<Paddle>>,
     time: Res<Time>,
+    commands: Commands,
 ) {
     let (action_state, mut transform, mut vel) =
         query.get_single_mut().expect("Failed to get paddle entity");
@@ -98,6 +103,6 @@ fn move_paddle(
     }
 
     if action_state.just_pressed(&PaddleAction::Fire) {
-        // println!("shoot");
+        spawn_ball(commands, transform.clone());
     }
 }

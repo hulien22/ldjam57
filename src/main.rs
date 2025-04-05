@@ -1,4 +1,5 @@
 use app_state::AppState;
+use ball::BallPlugin;
 use bevy::{
     log::{Level, LogPlugin},
     prelude::*,
@@ -8,6 +9,7 @@ use paddle::PaddlePlugin;
 use physics::PhysicsPlugin;
 
 mod app_state;
+mod ball;
 mod blocks;
 mod paddle;
 mod physics;
@@ -20,6 +22,7 @@ fn main() {
         }))
         .add_plugins(BlocksPlugin)
         .add_plugins(PaddlePlugin)
+        .add_plugins(BallPlugin)
         .add_plugins(PhysicsPlugin)
         .add_systems(Startup, setup_camera)
         .init_state::<AppState>()

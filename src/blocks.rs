@@ -1,5 +1,7 @@
 use bevy::prelude::*;
-use bevy_rapier2d::prelude::{Collider, CollisionEvent, GravityScale, RigidBody};
+use bevy_rapier2d::prelude::{
+    Collider, CollisionEvent, Friction, GravityScale, Restitution, RigidBody,
+};
 
 use crate::app_state::AppState;
 
@@ -38,6 +40,8 @@ fn spawn_blocks(mut commands: Commands) {
                 Collider::cuboid(BLOCK_SIZE / 2.0, BLOCK_SIZE / 2.0),
                 RigidBody::Fixed,
                 GravityScale(0.0),
+                Friction::coefficient(0.0),
+                Restitution::coefficient(1.1),
                 Block,
                 HitPoints(3),
                 StateScoped(AppState::Game),
