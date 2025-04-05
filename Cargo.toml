@@ -16,6 +16,10 @@ codegen-units = 1
 incremental = false
 debug = false
 
+# for Windows, use lld instad of default linker
+[target.x86_64-pc-windows-msvc]
+linker = "rust-lld.exe"
+
 [dependencies]
 bevy = { version = "0.15.3", features = [
     "dynamic_linking",
