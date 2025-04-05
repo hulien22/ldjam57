@@ -28,15 +28,20 @@ fn spawn_blocks(mut commands: Commands) {
             spawn_block_at(j, i, &mut commands);
         }
     }
+
+    // Spawn walls/planes on the sides.
     commands.spawn((
         Transform::from_xyz(BLOCK_GROUP_OFFSET, 0.0, 0.0),
         RigidBody::Fixed,
+        Friction::coefficient(0.0),
+        Restitution::coefficient(1.1),
         Collider::halfspace(Vec2 { x: -1.0, y: 0.0 }).unwrap(),
     ));
-
     commands.spawn((
         Transform::from_xyz(-BLOCK_GROUP_OFFSET, 0.0, 0.0),
         RigidBody::Fixed,
+        Friction::coefficient(0.0),
+        Restitution::coefficient(1.1),
         Collider::halfspace(Vec2 { x: 1.0, y: 0.0 }).unwrap(),
     ));
 }
