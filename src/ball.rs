@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::{
     ActiveCollisionTypes, ActiveEvents, CoefficientCombineRule, Collider, CollisionEvent, Damping,
-    Friction, GravityScale, Restitution, RigidBody, Velocity,
+    Friction, GravityScale, LockedAxes, Restitution, RigidBody, Velocity,
 };
 
 use crate::app_state::AppState;
@@ -40,6 +40,7 @@ pub fn spawn_ball(mut commands: Commands, transform: Transform) {
             linear_damping: 0.0,
             angular_damping: 1.0,
         },
+        // LockedAxes::ROTATION_LOCKED_Z,
         ActiveCollisionTypes::all(),
         ActiveEvents::COLLISION_EVENTS,
         StateScoped(AppState::Game),
@@ -48,6 +49,7 @@ pub fn spawn_ball(mut commands: Commands, transform: Transform) {
     ));
 }
 
+// todo move this to collisions, and perhaps modify physics so we never slow down?
 fn clamp_balls(mut query: Query<&mut Velocity, With<Ball>>) {
     const MAX_VELOCITY: f32 = 500.0;
     for mut velocity in query.iter_mut() {
