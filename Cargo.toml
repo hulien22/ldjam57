@@ -26,3 +26,4 @@ bevy = { version = "0.15.3", features = [
 ] } # remove dynamic_linking for releases
 leafwing-input-manager = { version = "0.16.0" }
 leafwing_input_manager_macros = { version = "0.16.0" }
+bevy_rapier2d = { version = "0.29.0", features = ["debug-render-2d"] }

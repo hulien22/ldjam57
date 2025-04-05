@@ -5,10 +5,12 @@ use bevy::{
 };
 use blocks::BlocksPlugin;
 use paddle::PaddlePlugin;
+use physics::PhysicsPlugin;
 
 mod app_state;
 mod blocks;
 mod paddle;
+mod physics;
 
 fn main() {
     App::new()
@@ -18,6 +20,7 @@ fn main() {
         }))
         .add_plugins(BlocksPlugin)
         .add_plugins(PaddlePlugin)
+        .add_plugins(PhysicsPlugin)
         .add_systems(Startup, setup_camera)
         .init_state::<AppState>()
         .enable_state_scoped_entities::<AppState>()
