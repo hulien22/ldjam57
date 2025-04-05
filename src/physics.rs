@@ -5,6 +5,7 @@ use bevy_rapier2d::{
     render::RapierDebugRenderPlugin,
 };
 
+use crate::ball::{Ball, PreviousVelocity};
 use crate::blocks::{Block, HitPoints};
 
 pub struct PhysicsPlugin;
@@ -19,7 +20,20 @@ impl Plugin for PhysicsPlugin {
 
 fn process_collisions(
     mut reader: EventReader<CollisionEvent>,
-    mut block_query: Query<(Entity, &mut HitPoints, &Transform, &Collider), With<Block>>,
+    mut ball_query: Query<
+        (
+            Entity,
+            &mut Velocity,
+            &mut PreviousVelocity,
+            &Transform,
+            &Collider,
+        ),
+        With<Ball>,
+    >,
+    mut block_query: Query<
+        (Entity, &mut HitPoints, &Transform, &Collider),
+        (With<Block>, Without<Ball>),
+    >,
     mut commands: Commands,
 ) {
     for &collision in reader.read() {
@@ -44,6 +58,36 @@ fn process_collisions(
                         &mut commands,
                     );
                 }
+
+                // handle ball collisions
+                if let Ok((entity, mut velocity, mut previous_velocity, transform, collider)) =
+                    ball_query.get_mut(lhs)
+                {
+                    on_ball_hit(
+                        entity,
+                        &mut velocity,
+                        &mut previous_velocity,
+                        transform,
+                        collider,
+                        &mut commands,
+                    );
+                } else if let Ok((
+                    entity,
+                    mut velocity,
+                    mut previous_velocity,
+                    transform,
+                    collider,
+                )) = ball_query.get_mut(rhs)
+                {
+                    on_ball_hit(
+                        entity,
+                        &mut velocity,
+                        &mut previous_velocity,
+                        transform,
+                        collider,
+                        &mut commands,
+                    );
+                }
             }
             _ => {}
         }
@@ -62,4 +106,35 @@ fn on_block_hit(
         Ok(_) => {}
         Err(_) => commands.entity(entity).try_despawn(),
     }
+}
+
+fn on_ball_hit(
+    entity: Entity,
+    velocity: &mut Velocity,
+    previous_velocity: &mut PreviousVelocity,
+    transform: &Transform,
+    collider: &Collider,
+    commands: &mut Commands,
+) {
+    info!(
+        "ball hit {:?} velocity: {:?} previous_velocity: {:?}",
+        entity, velocity.linvel, previous_velocity.linvel
+    );
+
+    if velocity.linvel.length_squared() < previous_velocity.linvel.length_squared() {
+        // balls are not allowed to slow down
+        velocity.linvel = previous_velocity.linvel;
+    }
+    // TODO handle speed increasing here instead of using Restitution
+
+    const MAX_VELOCITY: f32 = 500.0;
+    if velocity.linvel.length_squared() > MAX_VELOCITY * MAX_VELOCITY {
+        println!(
+            "clamped ball velocity: {}",
+            velocity.linvel.length_squared()
+        );
+        velocity.linvel = velocity.linvel.normalize() * MAX_VELOCITY;
+    }
+
+    previous_velocity.linvel = velocity.linvel;
 }
