@@ -1,7 +1,12 @@
+use app_state::AppState;
 use bevy::{
     log::{Level, LogPlugin},
     prelude::*,
 };
+use blocks::BlocksPlugin;
+
+mod app_state;
+mod blocks;
 
 fn main() {
     App::new()
@@ -9,5 +14,12 @@ fn main() {
             level: Level::INFO,
             ..Default::default()
         }))
+        .add_plugins(BlocksPlugin)
+        .add_systems(Startup, setup_camera)
+        .init_state::<AppState>()
         .run();
+}
+
+fn setup_camera(mut commands: Commands) {
+    commands.spawn((Camera2d, Name::new("Camera")));
 }
