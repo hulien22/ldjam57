@@ -121,16 +121,21 @@ fn on_ball_hit(
     //     entity, velocity.linvel, previous_velocity.linvel
     // );
 
-    if velocity.linvel.length_squared() < previous_velocity.linvel.length_squared() {
+    let mut new_vel = velocity.linvel;
+
+    if new_vel.length_squared() < previous_velocity.linvel.length_squared() {
         // balls are not allowed to slow down
-        velocity.linvel = velocity.linvel.normalize() * previous_velocity.linvel.length();
+        new_vel = new_vel.normalize() * previous_velocity.linvel.length();
     }
     // TODO handle speed increasing here instead of using Restitution
 
     const MAX_VELOCITY: f32 = 500.0;
-    if velocity.linvel.length_squared() > MAX_VELOCITY * MAX_VELOCITY {
-        velocity.linvel = velocity.linvel.normalize() * MAX_VELOCITY;
+    if new_vel.length_squared() > MAX_VELOCITY * MAX_VELOCITY {
+        new_vel = new_vel.normalize() * MAX_VELOCITY;
     }
 
-    previous_velocity.linvel = velocity.linvel;
+    if new_vel != velocity.linvel {
+        velocity.linvel = new_vel;
+    }
+    previous_velocity.linvel = new_vel;
 }
