@@ -1,6 +1,7 @@
 use bevy::{math::VectorSpace, prelude::*};
 use bevy_rapier2d::prelude::{
-    Collider, CollisionEvent, GravityScale, KinematicCharacterController, RigidBody,
+    ActiveCollisionTypes, ActiveEvents, Collider, CollisionEvent, GravityScale,
+    KinematicCharacterController, RigidBody,
 };
 use leafwing_input_manager::{input_map, prelude::*};
 
@@ -47,6 +48,8 @@ fn spawn_paddle(mut commands: Commands) {
         RigidBody::KinematicPositionBased,
         KinematicCharacterController::default(),
         GravityScale(0.0),
+        ActiveCollisionTypes::all(),
+        ActiveEvents::COLLISION_EVENTS,
         StateScoped(AppState::Game),
         Name::new("Paddle"),
         InputManagerBundle::with_map(PaddleAction::default_bindings()),
