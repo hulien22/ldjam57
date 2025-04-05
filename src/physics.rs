@@ -104,7 +104,7 @@ fn on_block_hit(
     // info!("block hit");
     match hitpoints.damage(1) {
         Ok(_) => {}
-        Err(_) => commands.entity(entity).despawn(),
+        Err(_) => commands.entity(entity).try_despawn(),
     }
 }
 
