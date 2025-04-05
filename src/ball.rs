@@ -3,6 +3,7 @@ use bevy_rapier2d::prelude::{
     ActiveCollisionTypes, ActiveEvents, Ccd, CoefficientCombineRule, Collider, CollisionEvent,
     Damping, Friction, GravityScale, LockedAxes, Restitution, RigidBody, Velocity,
 };
+use rand::Rng;
 
 use crate::app_state::AppState;
 
@@ -37,6 +38,7 @@ impl PreviousVelocity {
 }
 
 pub fn spawn_ball(mut commands: Commands, transform: Transform) {
+    // let mut rng = rand::rng();
     commands.spawn((
         Ball,
         Sprite::from_color(Color::srgb(0.5, 0.5 as f32, 0.2), Vec2 { x: 10.0, y: 10.0 }),
@@ -66,7 +68,12 @@ pub fn spawn_ball(mut commands: Commands, transform: Transform) {
         ),
         StateScoped(AppState::Game),
         Name::new("Ball"),
-        Velocity::linear(Vec2::new(0.0, -100.0)),
+        Velocity::linear(
+            transform
+                .rotation
+                .mul_vec3(Vec3::new(0.0, -100.0, 0.0))
+                .truncate(),
+        ),
         PreviousVelocity::zero(),
     ));
 }
