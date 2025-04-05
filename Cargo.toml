@@ -28,3 +28,4 @@ leafwing-input-manager = { version = "0.16.0" }
 leafwing_input_manager_macros = { version = "0.16.0" }
 bevy_rapier2d = { version = "0.29.0", features = ["debug-render-2d"] }
 noisy_bevy = { version = "0.8.0" }
+bevy_dev_tools = { version = "0.15.3" }

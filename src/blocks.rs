@@ -12,7 +12,8 @@ impl Plugin for BlocksPlugin {
             .add_systems(
                 FixedUpdate,
                 check_for_new_block_depths.run_if(in_state(AppState::Game)),
-            );
+            )
+            .add_systems(PreUpdate, despawn_hack);
     }
 }
 
@@ -105,6 +106,15 @@ fn check_for_new_block_depths(
 
 #[derive(Component, Debug, Clone, Copy)]
 pub struct Block;
+
+#[derive(Component)]
+pub struct DespawnHack;
+
+fn despawn_hack(query: Query<Entity, With<DespawnHack>>, mut commands: Commands) {
+    for entity in query.iter() {
+        commands.entity(entity).try_despawn();
+    }
+}
 
 #[derive(Component, Debug, Clone, Copy)]
 pub struct HitPoints(u16);

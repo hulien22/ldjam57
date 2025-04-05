@@ -3,7 +3,9 @@ use ball::BallPlugin;
 use bevy::{
     log::{Level, LogPlugin},
     prelude::*,
+    text::FontSmoothing,
 };
+use bevy_dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin};
 use blocks::BlocksPlugin;
 use paddle::PaddlePlugin;
 use physics::PhysicsPlugin;
@@ -20,6 +22,17 @@ fn main() {
             level: Level::INFO,
             ..Default::default()
         }))
+        .add_plugins(FpsOverlayPlugin {
+            config: FpsOverlayConfig {
+                text_config: TextFont {
+                    font_size: 12.0,
+                    font: default(),
+                    font_smoothing: FontSmoothing::default(),
+                },
+                text_color: Color::srgb(0.0, 1.0, 0.0),
+                enabled: true,
+            },
+        })
         .add_plugins(BlocksPlugin)
         .add_plugins(PaddlePlugin)
         .add_plugins(BallPlugin)
