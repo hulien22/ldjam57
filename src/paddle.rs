@@ -33,7 +33,8 @@ impl Plugin for PaddlePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(InputManagerPlugin::<PaddleAction>::default())
             .add_systems(OnEnter(AppState::Game), spawn_paddle)
-            .add_systems(FixedUpdate, (move_paddle));
+            .add_systems(FixedUpdate, (move_paddle))
+            .add_systems(PostUpdate, follow_cam.run_if(in_state(AppState::Game)));
     }
 }
 
@@ -105,4 +106,24 @@ fn move_paddle(
     if action_state.just_pressed(&PaddleAction::Fire) {
         spawn_ball(commands, transform.clone());
     }
+}
+
+const FOLLOW_SPEED: f32 = 5.0;
+
+fn follow_cam(
+    mut camera_query: Query<&mut Transform, (With<Camera>, Without<Paddle>)>,
+    paddle_query: Query<&Transform, (With<Paddle>, Without<Camera>)>,
+    time: Res<Time>,
+) {
+    let (mut camera_transform) = camera_query
+        .get_single_mut()
+        .expect("Need single camera to follow paddle.");
+    let (paddle_transform) = paddle_query
+        .get_single()
+        .expect("Need single paddle to follow.");
+    camera_transform.translation.y = VectorSpace::lerp(
+        camera_transform.translation.y,
+        paddle_transform.translation.y,
+        FOLLOW_SPEED * time.delta_secs(),
+    );
 }
