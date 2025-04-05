@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_rapier2d::prelude::{Collider, CollisionEvent};
+use bevy_rapier2d::prelude::{Collider, CollisionEvent, GravityScale, RigidBody};
 
 use crate::app_state::AppState;
 
@@ -18,6 +18,8 @@ fn spawn_blocks(mut commands: Commands) {
                 Sprite::from_color(Color::srgb(0.5, 0.5 as f32, 0.2), Vec2 { x: 10.0, y: 10.0 }),
                 Transform::from_xyz(i as f32 * 11.0, j as f32 * 11.0, 0.0),
                 Collider::cuboid(5.0, 5.0),
+                RigidBody::Fixed,
+                GravityScale(0.0),
                 Block,
                 HitPoints(3),
                 StateScoped(AppState::Game),
