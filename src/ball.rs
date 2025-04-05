@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::{
-    ActiveCollisionTypes, ActiveEvents, CoefficientCombineRule, Collider, CollisionEvent, Damping,
-    Friction, GravityScale, LockedAxes, Restitution, RigidBody, Velocity,
+    ActiveCollisionTypes, ActiveEvents, Ccd, CoefficientCombineRule, Collider, CollisionEvent,
+    Damping, Friction, GravityScale, LockedAxes, Restitution, RigidBody, Velocity,
 };
 
 use crate::app_state::AppState;
@@ -59,8 +59,11 @@ pub fn spawn_ball(mut commands: Commands, transform: Transform) {
             angular_damping: 1.0,
         },
         // LockedAxes::ROTATION_LOCKED_Z,
-        ActiveCollisionTypes::all(),
-        ActiveEvents::COLLISION_EVENTS,
+        (
+            ActiveCollisionTypes::all(),
+            ActiveEvents::COLLISION_EVENTS,
+            Ccd::enabled(),
+        ),
         StateScoped(AppState::Game),
         Name::new("Ball"),
         Velocity::linear(Vec2::new(0.0, -100.0)),

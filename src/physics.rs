@@ -5,7 +5,10 @@ use bevy_rapier2d::{
     render::RapierDebugRenderPlugin,
 };
 
-use crate::blocks::{Block, HitPoints};
+use crate::{
+    app_state::AppState,
+    blocks::{Block, HitPoints},
+};
 use crate::{
     ball::{Ball, PreviousVelocity},
     blocks::DespawnHack,
@@ -16,8 +19,11 @@ pub struct PhysicsPlugin;
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(32.0))
-            .add_plugins(RapierDebugRenderPlugin::default())
-            .add_systems(PostUpdate, process_collisions);
+            //.add_plugins(RapierDebugRenderPlugin::default())
+            .add_systems(
+                PostUpdate,
+                process_collisions.run_if(in_state(AppState::Game)),
+            );
     }
 }
 

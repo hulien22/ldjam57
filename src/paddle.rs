@@ -1,6 +1,6 @@
 use bevy::{math::VectorSpace, prelude::*};
 use bevy_rapier2d::prelude::{
-    ActiveCollisionTypes, ActiveEvents, Collider, ColliderMassProperties, CollisionEvent,
+    ActiveCollisionTypes, ActiveEvents, Ccd, Collider, ColliderMassProperties, CollisionEvent,
     ExternalImpulse, Friction, GravityScale, KinematicCharacterController, LockedAxes, Restitution,
     RigidBody, Velocity,
 };
@@ -33,7 +33,7 @@ impl Plugin for PaddlePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(InputManagerPlugin::<PaddleAction>::default())
             .add_systems(OnEnter(AppState::Game), spawn_paddle)
-            .add_systems(FixedUpdate, (move_paddle))
+            .add_systems(FixedUpdate, move_paddle.run_if(in_state(AppState::Game)))
             .add_systems(PostUpdate, follow_cam.run_if(in_state(AppState::Game)));
     }
 }
@@ -53,8 +53,11 @@ fn spawn_paddle(mut commands: Commands) {
         ColliderMassProperties::Density(10.0),
         Friction::coefficient(1.0),
         Restitution::coefficient(2.0),
-        ActiveCollisionTypes::all(),
-        ActiveEvents::COLLISION_EVENTS,
+        (
+            ActiveCollisionTypes::all(),
+            ActiveEvents::COLLISION_EVENTS,
+            Ccd::enabled(),
+        ),
         StateScoped(AppState::Game),
         Name::new("Paddle"),
         InputManagerBundle::with_map(PaddleAction::default_bindings()),

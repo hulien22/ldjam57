@@ -1,0 +1,11 @@
+({
+    "dirt": File (
+        path: "textures/greenbloc.png"//"textures/dirtblock.png"
+    ),
+    "iron": File (
+        path: "textures/bluebloc.png"//"textures/RedDirtBloc.png"
+    ),
+    "obsidian": File (
+        path: "textures/pinkbloc.png"//"textures/PurpleDirtBlock.png"
+    )
+})

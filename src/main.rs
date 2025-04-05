@@ -1,4 +1,5 @@
 use app_state::AppState;
+use asset_loading::AssetLoadingPlugin;
 use ball::BallPlugin;
 use bevy::{
     log::{Level, LogPlugin},
@@ -11,6 +12,7 @@ use paddle::PaddlePlugin;
 use physics::PhysicsPlugin;
 
 mod app_state;
+mod asset_loading;
 mod ball;
 mod blocks;
 mod paddle;
@@ -33,6 +35,7 @@ fn main() {
                 enabled: true,
             },
         })
+        .add_plugins(AssetLoadingPlugin)
         .add_plugins(BlocksPlugin)
         .add_plugins(PaddlePlugin)
         .add_plugins(BallPlugin)

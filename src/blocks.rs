@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_rapier2d::prelude::{Collider, Friction, Restitution, RigidBody};
 use noisy_bevy::fbm_simplex_2d_seeded;
 
-use crate::app_state::AppState;
+use crate::{app_state::AppState, asset_loading::GameImageAssets};
 
 pub struct BlocksPlugin;
 
@@ -13,13 +13,14 @@ impl Plugin for BlocksPlugin {
                 FixedUpdate,
                 check_for_new_block_depths.run_if(in_state(AppState::Game)),
             )
-            .add_systems(PreUpdate, despawn_hack);
+            .add_observer(on_add_block)
+            .add_systems(PreUpdate, despawn_hack.run_if(in_state(AppState::Game)));
     }
 }
 
-const BLOCK_SIZE: f32 = 10.0;
-const BLOCK_COUNT_WIDTH: usize = 40;
-const BLOCK_GAP_SIZE: f32 = 2.0;
+const BLOCK_SIZE: f32 = 20.0;
+const BLOCK_COUNT_WIDTH: usize = 80;
+const BLOCK_GAP_SIZE: f32 = 0.0;
 const BLOCK_GROUP_OFFSET: f32 =
     (BLOCK_SIZE * BLOCK_COUNT_WIDTH as f32 + BLOCK_GAP_SIZE * (BLOCK_COUNT_WIDTH - 1) as f32) / 2.0;
 
@@ -53,13 +54,6 @@ fn spawn_block_at(j: usize, i: usize, commands: &mut Commands) {
         y: i as f32,
     });
     commands.spawn((
-        Sprite::from_color(
-            block_type.temp_colour(),
-            Vec2 {
-                x: BLOCK_SIZE,
-                y: BLOCK_SIZE,
-            },
-        ),
         Transform::from_xyz(
             -BLOCK_GROUP_OFFSET + j as f32 * (BLOCK_SIZE + BLOCK_GAP_SIZE) + BLOCK_SIZE / 2.0,
             i as f32 * -(BLOCK_SIZE + BLOCK_GAP_SIZE) + BLOCK_SIZE / 2.0,
@@ -69,8 +63,7 @@ fn spawn_block_at(j: usize, i: usize, commands: &mut Commands) {
         RigidBody::Fixed,
         Friction::coefficient(0.0),
         Restitution::coefficient(1.1),
-        Block,
-        HitPoints(block_type.max_hitpoints()),
+        Block(block_type),
         StateScoped(AppState::Game),
         Name::new(format!("Block {} {}", i, j)),
     ));
@@ -79,7 +72,6 @@ fn spawn_block_at(j: usize, i: usize, commands: &mut Commands) {
 fn check_for_new_block_depths(
     camera_query: Query<(&Camera, &GlobalTransform)>,
     mut deepest_layer: Local<usize>,
-    mut draw: Gizmos,
     mut commands: Commands,
 ) {
     if *deepest_layer == 0 {
@@ -91,7 +83,6 @@ fn check_for_new_block_depths(
     let viewport_position = camera
         .viewport_to_world_2d(camera_transform, camera.logical_viewport_size().unwrap())
         .expect("Need viewport position to check depth.");
-    draw.circle_2d(viewport_position, 5f32, Color::srgb(1.0, 0.0, 1.0));
     let current_depth =
         ((viewport_position.y - BLOCK_SIZE / 2.0) / -(BLOCK_SIZE + BLOCK_GAP_SIZE)).ceil() as usize;
     if current_depth > *deepest_layer {
@@ -105,7 +96,30 @@ fn check_for_new_block_depths(
 }
 
 #[derive(Component, Debug, Clone, Copy)]
-pub struct Block;
+pub struct Block(BlockType);
+
+fn on_add_block(
+    trigger: Trigger<OnAdd, Block>,
+    query: Query<&Block>,
+    mut commands: Commands,
+    assets: Res<GameImageAssets>,
+) {
+    if let Ok(block) = query.get(trigger.entity()) {
+        if let Some(mut entity_commands) = commands.get_entity(trigger.entity()) {
+            entity_commands.try_insert((
+                Sprite {
+                    image: block.0.image_handle(&assets),
+                    custom_size: Some(Vec2 {
+                        x: BLOCK_SIZE,
+                        y: BLOCK_SIZE,
+                    }),
+                    ..Default::default()
+                },
+                HitPoints(block.0.max_hitpoints()),
+            ));
+        }
+    }
+}
 
 #[derive(Component)]
 pub struct DespawnHack;
@@ -129,6 +143,7 @@ impl HitPoints {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum BlockType {
     Basic,
     Iron,
@@ -149,6 +164,14 @@ impl BlockType {
             BlockType::Basic => Color::srgb(0.322, 0.212, 0.071),
             BlockType::Iron => Color::srgb(0.4, 0.4, 0.4),
             BlockType::Obsidian => Color::srgb(0.216, 0.106, 0.42),
+        }
+    }
+
+    fn image_handle(&self, assets: &Res<GameImageAssets>) -> Handle<Image> {
+        match self {
+            BlockType::Basic => assets.dirt.clone(),
+            BlockType::Iron => assets.iron.clone(),
+            BlockType::Obsidian => assets.obsidian.clone(),
         }
     }
 }
