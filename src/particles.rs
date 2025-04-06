@@ -83,7 +83,7 @@ fn box_particle_observer(trigger: Trigger<BoxParticlesEvent>, mut commands: Comm
 
     commands.spawn((
         BoxParticle,
-        Sprite::from_color(Color::WHITE, Vec2 { x: 10.0, y: 10.0 }),
+        Sprite::from_color(trigger.color, Vec2 { x: 10.0, y: 10.0 }),
         transform,
         Animator::new(transform_tween_track),
         Animator::new(color_tween),

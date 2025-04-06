@@ -139,10 +139,7 @@ fn move_paddle(
 
     commands.trigger(BoxParticlesEvent {
         init_position: Vec2::new(transform.translation.x, transform.translation.y),
-        target_position: Vec2::new(
-            transform.translation.x - target_lin_vel.x * 0.5,
-            transform.translation.y - target_lin_vel.y * 0.5,
-        ),
+        target_position: transform.translation.truncate() - vel.linvel.normalize(),
         z_index: -1.0,
         color: Color::srgb(0.2, 0.2, 0.2),
     });

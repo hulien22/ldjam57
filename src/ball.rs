@@ -5,7 +5,7 @@ use bevy_rapier2d::prelude::{
 };
 use rand::Rng;
 
-use crate::{app_state::AppState, blocks::BlockType};
+use crate::{app_state::AppState, blocks::BlockType, particles::BoxParticlesEvent};
 
 pub struct BallPlugin;
 
@@ -15,7 +15,8 @@ impl Plugin for BallPlugin {
             // TODO verify if we need to do any ordering here..
             FixedUpdate,
             process_collisions.run_if(in_state(AppState::Game)),
-        );
+        )
+        .add_systems(Update, spawn_trail.run_if(in_state(AppState::Game)));
     }
 }
 
@@ -141,5 +142,19 @@ fn process_collisions(
             velocity.linvel = new_vel;
         }
         previous_velocity.linvel = new_vel;
+    }
+}
+
+fn spawn_trail(
+    mut commands: Commands,
+    ball_query: Query<(Entity, &Transform, &Velocity), With<Ball>>,
+) {
+    for (entity, transform, velocity) in ball_query.iter() {
+        commands.trigger(BoxParticlesEvent {
+            init_position: Vec2::new(transform.translation.x, transform.translation.y),
+            target_position: transform.translation.truncate() - velocity.linvel.normalize(),
+            z_index: -5.0,
+            color: Color::WHITE,
+        });
     }
 }
