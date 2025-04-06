@@ -1,12 +1,27 @@
 ({
-    "dirt": File (
-        path: "textures/greenbloc.png"//"textures/dirtblock.png"
+    "blue": File (
+        path: "textures/Blue_Block1.png"
     ),
-    "iron": File (
-        path: "textures/bluebloc.png"//"textures/RedDirtBloc.png"
+    "dark_blue": File (
+        path: "textures/Dark_Blue_Block1.png"
     ),
-    "obsidian": File (
-        path: "textures/pinkbloc.png"//"textures/PurpleDirtBlock.png"
+    "light_blue": File (
+        path: "textures/Light_Blue_Block1.png"
+    ),
+    "light_purple": File (
+        path: "textures/Light_Purple_Block1.png"
+    ),
+    "orange": File (
+        path: "textures/Orange_Block1.png"
+    ),
+    "pink": File (
+        path: "textures/Pink_Block1.png"
+    ),
+    "purple": File (
+        path: "textures/Purple_Block1.png"
+    ),
+    "red": File (
+        path: "textures/Red_Block1.png"
     ),
     "crack": File (
         path: "textures/crack.png"

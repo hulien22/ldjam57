@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::{Collider, Friction, Restitution, RigidBody};
-use noise::{Fbm, MultiFractal, NoiseFn, Perlin};
+use noise::{Fbm, MultiFractal, NoiseFn, Perlin, RidgedMulti};
 
 use crate::{app_state::AppState, asset_loading::GameImageAssets};
 
@@ -189,51 +189,102 @@ impl HitPoints {
 
 #[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
 pub enum BlockType {
-    Basic,
-    Iron,
-    Obsidian,
+    Blue,
+    LightBlue,
+    DarkBlue,
+    Purple,
+    LightPurple,
+    Pink,
+    Red,
+    Orange,
 }
 
 impl BlockType {
     fn max_hitpoints(&self) -> u16 {
         match self {
-            BlockType::Basic => 1,
-            BlockType::Iron => 2,
-            BlockType::Obsidian => 100,
+            BlockType::Blue => 1,
+            BlockType::DarkBlue => 2,
+            BlockType::LightBlue => 100,
+            BlockType::Purple => 5,
+            BlockType::LightPurple => 6,
+            BlockType::Pink => 3,
+            BlockType::Red => 6,
+            BlockType::Orange => 5,
         }
     }
 
     fn temp_colour(&self) -> Color {
         match self {
-            BlockType::Basic => Color::srgb(0.322, 0.212, 0.071),
-            BlockType::Iron => Color::srgb(0.4, 0.4, 0.4),
-            BlockType::Obsidian => Color::srgb(0.216, 0.106, 0.42),
+            BlockType::Blue => Color::srgb(0.322, 0.212, 0.071),
+            BlockType::DarkBlue => Color::srgb(0.4, 0.4, 0.4),
+            BlockType::LightBlue => Color::srgb(0.216, 0.106, 0.42),
+            BlockType::Purple => Color::srgb(0.216, 0.106, 0.929),
+            BlockType::LightPurple => Color::srgb(0.098, 0.541, 0.055),
+            BlockType::Red => Color::srgb(0.831, 0.149, 0.055),
+            BlockType::Pink => Color::srgb(0.984, 1.0, 0.169),
+            BlockType::Orange => Color::srgb(1.0, 0.651, 0.216),
         }
     }
 
     fn image_handle(&self, assets: &Res<GameImageAssets>) -> Handle<Image> {
         match self {
-            BlockType::Basic => assets.dirt.clone(),
-            BlockType::Iron => assets.iron.clone(),
-            BlockType::Obsidian => assets.obsidian.clone(),
+            BlockType::Blue => assets.blue.clone(),
+            BlockType::DarkBlue => assets.dark_blue.clone(),
+            BlockType::LightBlue => assets.light_blue.clone(),
+            BlockType::Purple => assets.purple.clone(),
+            BlockType::LightPurple => assets.light_purple.clone(),
+            BlockType::Red => assets.red.clone(),
+            BlockType::Pink => assets.pink.clone(),
+            BlockType::Orange => assets.orange.clone(),
         }
     }
 }
 
 fn pick_block_type(position: Vec2) -> BlockType {
     let a = Fbm::<Perlin>::new(123)
-        .set_frequency(0.2)
+        .set_frequency(0.4)
         .get([position.x as f64, position.y as f64]);
-    let b = Fbm::<Perlin>::new(12312412)
-        .set_frequency(0.2)
+    let b = Fbm::<Perlin>::new(12412)
+        .set_frequency(0.04)
+        .get([position.x as f64, position.y as f64]);
+    let c = Fbm::<Perlin>::new(123546)
+        .set_frequency(0.08)
+        .set_lacunarity(2.5)
+        .set_octaves(3)
+        .get([position.x as f64, position.y as f64]);
+    let d = Fbm::<Perlin>::new(1212)
+        .set_frequency(0.04)
+        .get([position.x as f64, position.y as f64]);
+    let e = Fbm::<Perlin>::new(124363)
+        .set_frequency(0.04)
+        .get([position.x as f64, position.y as f64]);
+    let f = RidgedMulti::<Perlin>::new(361232412)
+        .set_frequency(0.04)
+        //.set_octaves(3)
+        .get([position.x as f64, position.y as f64]);
+    let g = Fbm::<Perlin>::new(6266123)
+        .set_frequency(0.04)
+        .get([position.x as f64, position.y as f64]);
+    let h = Fbm::<Perlin>::new(31362412)
+        .set_frequency(0.04)
         .get([position.x as f64, position.y as f64]);
 
     info!("{} {}", a, b);
-    if a > 0.4 {
-        BlockType::Obsidian
-    } else if b > 0.39 {
-        BlockType::Iron
+    if g > 0.65 {
+        BlockType::Blue
+    } else if b > 0.65 {
+        BlockType::LightBlue
+    } else if c > 0.65 {
+        BlockType::LightPurple
+    } else if d > 0.65 {
+        BlockType::Red
+    } else if e > 0.65 {
+        BlockType::Orange
+    } else if f > 0.7 {
+        BlockType::Purple
+    } else if a > 0.65 {
+        BlockType::Pink
     } else {
-        BlockType::Basic
+        BlockType::DarkBlue
     }
 }
