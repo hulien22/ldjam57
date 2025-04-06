@@ -16,14 +16,28 @@ codegen-units = 1
 incremental = false
 debug = false
 
+# Optimize for size in the wasm-release profile to reduce load times and bandwidth usage on web.
+[profile.wasm-release]
+# Default to release profile values.
+inherits = "release"
+# Optimize with size in mind (also try "z", sometimes it is better).
+# Slightly slows compile times, great improvements to file size and runtime performance.
+opt-level = "s"
+# Strip all debugging information from the binary to slightly reduce file size.
+strip = "debuginfo"
+
 # for Windows, use lld instad of default linker
 [target.x86_64-pc-windows-msvc]
 linker = "rust-lld.exe"
 
+[features]
+dev = [
+    "bevy/dynamic_linking", # only include dynamic_linking for dev builds
+]
+release = []
+
 [dependencies]
-bevy = { version = "0.15.3", features = [
-    "dynamic_linking",
-] } # remove dynamic_linking for releases
+bevy = { version = "0.15.3" }
 leafwing-input-manager = { version = "0.16.0" }
 leafwing_input_manager_macros = { version = "0.16.0" }
 bevy_rapier2d = { version = "0.29.0", features = ["debug-render-2d"] }
@@ -34,3 +48,7 @@ bevy_asset_loader = { version = "0.22", features = [
     "standard_dynamic_assets",
 ] }
 rand = "0.9.0"
+getrandom = { version = "0.3", features = [
+    "wasm_js",
+] } # needed for wasm builds?
+# bevy_old_tv_shader = { git = "https://github.com/Defernus/bevy_old_tv_shader.git", version = "0.2.0" }

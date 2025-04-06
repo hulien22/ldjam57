@@ -10,5 +10,11 @@
     ),
     "crack": File (
         path: "textures/crack.png"
+    ),
+    "ufo_top": File (
+        path: "textures/UFO_Top.png"
+    ),
+    "ufo_bottom": File (
+        path: "textures/UFO_bottom.png"
     )
 })
