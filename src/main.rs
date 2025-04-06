@@ -9,6 +9,7 @@ use bevy::{
     window::WindowResolution,
 };
 use bevy_dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin};
+use blocks::{BLOCK_GROUP_OFFSET, WALL_WIDTH};
 use paddle::PaddlePlugin;
 use physics::PhysicsPlugin;
 
