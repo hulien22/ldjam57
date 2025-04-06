@@ -41,7 +41,7 @@ impl PreviousVelocity {
 }
 
 pub fn spawn_ball(mut commands: Commands, transform: Transform) {
-    // let mut rng = rand::rng();
+    let mut rng = rand::rng();
     commands.spawn((
         Ball,
         Sprite::from_color(Color::srgb(0.5, 0.5 as f32, 0.5), Vec2 { x: 10.0, y: 10.0 }),
@@ -74,7 +74,7 @@ pub fn spawn_ball(mut commands: Commands, transform: Transform) {
         Velocity::linear(
             transform
                 .rotation
-                .mul_vec3(Vec3::new(0.0, -100.0, 0.0))
+                .mul_vec3(Vec3::new(rng.random_range(-10.0..10.0), -100.0, 0.0))
                 .truncate(),
         ),
         PreviousVelocity::zero(),
