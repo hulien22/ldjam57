@@ -6,7 +6,11 @@ use bevy_rapier2d::prelude::{
 };
 use leafwing_input_manager::{input_map, prelude::*};
 
-use crate::{app_state::AppState, asset_loading::GameImageAssets, ball::spawn_ball};
+use crate::{
+    app_state::AppState,
+    asset_loading::GameImageAssets,
+    ball::{CollectedResources, spawn_ball},
+};
 
 pub struct PaddlePlugin;
 
@@ -39,7 +43,7 @@ impl Plugin for PaddlePlugin {
 }
 
 #[derive(Component)]
-struct Paddle;
+pub struct Paddle;
 
 // TODO height won't change, but width will so need to move to a resource
 const PADDLE_WIDTH: f32 = 32.2;
@@ -75,6 +79,7 @@ fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
             // LockedAxes::ROTATION_LOCKED_Z,
             Velocity::default(),
             InheritedVisibility::default(),
+            CollectedResources::new(),
         ))
         .with_children(|parent| {
             const UFO_SCALE: f32 = PADDLE_HEIGHT / 60. * 2.;

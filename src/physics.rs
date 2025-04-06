@@ -9,6 +9,7 @@ use crate::{
     app_state::AppState,
     ball::{self, CollectedResources},
     blocks::{Block, BlockType, HitPoints},
+    paddle::Paddle,
 };
 use crate::{ball::Ball, blocks::DespawnHack};
 
@@ -28,6 +29,7 @@ impl Plugin for PhysicsPlugin {
 fn process_collisions(
     mut reader: EventReader<CollisionEvent>,
     mut ball_query: Query<(Entity, &mut CollectedResources), With<Ball>>,
+    mut paddle_query: Query<(Entity, &mut CollectedResources), (With<Paddle>, Without<Ball>)>,
     mut block_query: Query<(Entity, &mut HitPoints, &Transform, &Collider, &Block), Without<Ball>>,
     mut commands: Commands,
 ) {
@@ -61,6 +63,12 @@ fn process_collisions(
                         &mut ball_query,
                     );
                 }
+                // Process the paddle collisions. Use 'else if' to avoid reprocessing any block collisions.
+                else if let Ok((entity, mut collected_resources)) = paddle_query.get_mut(lhs) {
+                    on_paddle_hit(&mut collected_resources, entity, rhs, &mut ball_query);
+                } else if let Ok((entity, mut collected_resources)) = paddle_query.get_mut(rhs) {
+                    on_paddle_hit(&mut collected_resources, entity, lhs, &mut ball_query);
+                }
             }
             _ => {}
         }
@@ -87,5 +95,20 @@ fn on_block_hit(
                 collected_resources.add(block.0);
             }
         }
+    }
+}
+
+fn on_paddle_hit(
+    collected_resources: &mut CollectedResources,
+    entity: Entity,
+    other: Entity,
+    ball_query: &mut Query<(Entity, &mut CollectedResources), With<Ball>>,
+) {
+    // check if collision is with a ball
+    if let Ok((_, mut ball_collected_resources)) = ball_query.get_mut(other) {
+        // add collected resources to paddle
+        collected_resources.combine(&*ball_collected_resources);
+        // clear the ball's collected resources
+        ball_collected_resources.clear();
     }
 }
