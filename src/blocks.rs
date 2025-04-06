@@ -18,10 +18,11 @@ impl Plugin for BlocksPlugin {
     }
 }
 
-const BLOCK_SIZE: f32 = 30.0;
-const BLOCK_COUNT_WIDTH: usize = 40;
-const BLOCK_GAP_SIZE: f32 = 0.0;
-const BLOCK_GROUP_OFFSET: f32 =
+pub const WALL_WIDTH: f32 = 50.0;
+pub const BLOCK_SIZE: f32 = 30.0;
+pub const BLOCK_COUNT_WIDTH: usize = 40;
+pub const BLOCK_GAP_SIZE: f32 = 0.0;
+pub const BLOCK_GROUP_OFFSET: f32 =
     (BLOCK_SIZE * BLOCK_COUNT_WIDTH as f32 + BLOCK_GAP_SIZE * (BLOCK_COUNT_WIDTH - 1) as f32) / 2.0;
 
 fn spawn_blocks(mut commands: Commands) {
@@ -46,6 +47,36 @@ fn spawn_blocks(mut commands: Commands) {
         Restitution::coefficient(1.1),
         Collider::halfspace(Vec2 { x: 1.0, y: 0.0 }).unwrap(),
     ));
+
+    // UI walls
+    commands
+        .spawn(Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            justify_content: JustifyContent::SpaceBetween,
+            ..Default::default()
+        })
+        .with_children(|parent| {
+            // left vertical fill (border)
+            parent.spawn((
+                Node {
+                    width: Val::Px(WALL_WIDTH),
+                    // border: UiRect::all(Val::Px(2.)),
+                    ..default()
+                },
+                BackgroundColor(Color::srgb(0., 0., 0.)),
+            ));
+            // right vertical fill (border)
+            parent.spawn((
+                Node {
+                    width: Val::Px(WALL_WIDTH),
+                    // border: UiRect::all(Val::Px(2.)),
+                    right: Val::Percent(0.0),
+                    ..default()
+                },
+                BackgroundColor(Color::srgb(0., 0., 0.)),
+            ));
+        });
 }
 
 fn spawn_block_at(j: usize, i: usize, commands: &mut Commands) {
