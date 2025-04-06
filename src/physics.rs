@@ -29,16 +29,6 @@ impl Plugin for PhysicsPlugin {
 
 fn process_collisions(
     mut reader: EventReader<CollisionEvent>,
-    mut ball_query: Query<
-        (
-            Entity,
-            &mut Velocity,
-            &mut PreviousVelocity,
-            &Transform,
-            &Collider,
-        ),
-        With<Ball>,
-    >,
     mut block_query: Query<
         (Entity, &mut HitPoints, &Transform, &Collider),
         (With<Block>, Without<Ball>),
@@ -67,36 +57,6 @@ fn process_collisions(
                         &mut commands,
                     );
                 }
-
-                // handle ball collisions
-                if let Ok((entity, mut velocity, mut previous_velocity, transform, collider)) =
-                    ball_query.get_mut(lhs)
-                {
-                    on_ball_hit(
-                        entity,
-                        &mut velocity,
-                        &mut previous_velocity,
-                        transform,
-                        collider,
-                        &mut commands,
-                    );
-                } else if let Ok((
-                    entity,
-                    mut velocity,
-                    mut previous_velocity,
-                    transform,
-                    collider,
-                )) = ball_query.get_mut(rhs)
-                {
-                    on_ball_hit(
-                        entity,
-                        &mut velocity,
-                        &mut previous_velocity,
-                        transform,
-                        collider,
-                        &mut commands,
-                    );
-                }
             }
             _ => {}
         }
@@ -117,36 +77,4 @@ fn on_block_hit(
             commands.entity(entity).insert(DespawnHack);
         }
     }
-}
-
-fn on_ball_hit(
-    entity: Entity,
-    velocity: &mut Velocity,
-    previous_velocity: &mut PreviousVelocity,
-    transform: &Transform,
-    collider: &Collider,
-    commands: &mut Commands,
-) {
-    // info!(
-    //     "ball hit {:?} velocity: {:?} previous_velocity: {:?}",
-    //     entity, velocity.linvel, previous_velocity.linvel
-    // );
-
-    let mut new_vel = velocity.linvel;
-
-    if new_vel.length_squared() < previous_velocity.linvel.length_squared() {
-        // balls are not allowed to slow down
-        new_vel = new_vel.normalize() * previous_velocity.linvel.length();
-    }
-    // TODO handle speed increasing here instead of using Restitution
-
-    const MAX_VELOCITY: f32 = 500.0;
-    if new_vel.length_squared() > MAX_VELOCITY * MAX_VELOCITY {
-        new_vel = new_vel.normalize() * MAX_VELOCITY;
-    }
-
-    if new_vel != velocity.linvel {
-        velocity.linvel = new_vel;
-    }
-    previous_velocity.linvel = new_vel;
 }

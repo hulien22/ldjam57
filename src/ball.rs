@@ -11,8 +11,11 @@ pub struct BallPlugin;
 
 impl Plugin for BallPlugin {
     fn build(&self, app: &mut App) {
-        // app.add_systems(OnEnter(AppState::Game), spawn_blocks);
-        // app.add_systems(FixedUpdate, clamp_balls);
+        app.add_systems(
+            // TODO verify if we need to do any ordering here..
+            FixedUpdate,
+            process_collisions.run_if(in_state(AppState::Game)),
+        );
     }
 }
 
@@ -41,7 +44,7 @@ pub fn spawn_ball(mut commands: Commands, transform: Transform) {
     // let mut rng = rand::rng();
     commands.spawn((
         Ball,
-        Sprite::from_color(Color::srgb(0.5, 0.5 as f32, 0.2), Vec2 { x: 10.0, y: 10.0 }),
+        Sprite::from_color(Color::srgb(0.5, 0.5 as f32, 0.5), Vec2 { x: 10.0, y: 10.0 }),
         Transform::from_xyz(transform.translation.x, transform.translation.y - 5.0, 0.0),
         Collider::ball(5.0),
         RigidBody::Dynamic,
@@ -78,16 +81,33 @@ pub fn spawn_ball(mut commands: Commands, transform: Transform) {
     ));
 }
 
-// // todo move this to collisions, and perhaps modify physics so we never slow down?
-// fn clamp_balls(mut query: Query<&mut Velocity, With<Ball>>) {
-//     const MAX_VELOCITY: f32 = 500.0;
-//     for mut velocity in query.iter_mut() {
-//         // if velocity.linvel.length_squared() > MAX_VELOCITY * MAX_VELOCITY {
-//         //     println!(
-//         //         "clamped ball velocity: {}",
-//         //         velocity.linvel.length_squared()
-//         //     );
-//         //     velocity.linvel = velocity.linvel.normalize() * MAX_VELOCITY;
-//         // }
-//     }
-// }
+fn process_collisions(
+    mut query: Query<(Entity, &mut Velocity, &mut PreviousVelocity), With<Ball>>,
+) {
+    for (entity, mut velocity, mut previous_velocity) in query.iter_mut() {
+        // Check if velocity has changed (can't use Changed<Velocity> since rapier updates it every time)
+        if velocity.linvel == previous_velocity.linvel {
+            continue;
+        }
+
+        // Velocity has changed (collision) so lets check if we need to modify it
+        let mut new_vel = velocity.linvel;
+        if new_vel.length_squared() < previous_velocity.linvel.length_squared() {
+            // balls are not allowed to slow down
+            new_vel = new_vel.normalize() * previous_velocity.linvel.length();
+        }
+        // TODO handle speed increasing here instead of using Restitution
+
+        const MAX_VELOCITY: f32 = 500.0;
+        if new_vel.length_squared() > MAX_VELOCITY * MAX_VELOCITY {
+            // clamp the speed
+            // TODO move this number to a component
+            new_vel = new_vel.normalize() * MAX_VELOCITY;
+        }
+
+        if new_vel != velocity.linvel {
+            velocity.linvel = new_vel;
+        }
+        previous_velocity.linvel = new_vel;
+    }
+}
