@@ -5,13 +5,10 @@ use bevy_rapier2d::{
     render::RapierDebugRenderPlugin,
 };
 
+use crate::blocks::DespawnHack;
 use crate::{
     app_state::AppState,
     blocks::{Block, HitPoints},
-};
-use crate::{
-    ball::{Ball, PreviousVelocity},
-    blocks::DespawnHack,
 };
 
 pub struct PhysicsPlugin;
@@ -29,10 +26,7 @@ impl Plugin for PhysicsPlugin {
 
 fn process_collisions(
     mut reader: EventReader<CollisionEvent>,
-    mut block_query: Query<
-        (Entity, &mut HitPoints, &Transform, &Collider),
-        (With<Block>, Without<Ball>),
-    >,
+    mut block_query: Query<(Entity, &mut HitPoints, &Transform, &Collider), (With<Block>)>,
     mut commands: Commands,
 ) {
     for &collision in reader.read() {
