@@ -31,4 +31,8 @@ pub struct GameImageAssets {
     pub iron: Handle<Image>,
     #[asset(key = "obsidian")]
     pub obsidian: Handle<Image>,
+    #[asset(key = "ufo_top")]
+    pub ufo_top: Handle<Image>,
+    #[asset(key = "ufo_bottom")]
+    pub ufo_bottom: Handle<Image>,
 }

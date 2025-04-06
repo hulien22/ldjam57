@@ -6,7 +6,7 @@ use bevy_rapier2d::prelude::{
 };
 use leafwing_input_manager::{input_map, prelude::*};
 
-use crate::{app_state::AppState, ball::spawn_ball};
+use crate::{app_state::AppState, asset_loading::GameImageAssets, ball::spawn_ball};
 
 pub struct PaddlePlugin;
 
@@ -41,29 +41,54 @@ impl Plugin for PaddlePlugin {
 #[derive(Component)]
 struct Paddle;
 
-fn spawn_paddle(mut commands: Commands) {
-    commands.spawn((
-        Paddle,
-        Sprite::from_color(Color::srgb(1.0, 1.0, 1.0), Vec2 { x: 30.0, y: 5.0 }),
-        Transform::from_xyz(0.0, 30.0, 0.0),
-        Collider::cuboid(15.0, 2.5),
-        RigidBody::Dynamic,
-        // KinematicCharacterController::default(),
-        GravityScale(0.0),
-        ColliderMassProperties::Density(10.0),
-        Friction::coefficient(1.0),
-        Restitution::coefficient(2.0),
-        (
-            ActiveCollisionTypes::all(),
-            ActiveEvents::COLLISION_EVENTS,
-            Ccd::enabled(),
-        ),
-        StateScoped(AppState::Game),
-        Name::new("Paddle"),
-        InputManagerBundle::with_map(PaddleAction::default_bindings()),
-        // LockedAxes::ROTATION_LOCKED_Z,
-        Velocity::default(),
-    ));
+// TODO height won't change, but width will so need to move to a resource
+const PADDLE_WIDTH: f32 = 32.2;
+const PADDLE_HEIGHT: f32 = 5.0;
+
+fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
+    commands
+        .spawn((
+            Paddle,
+            // Sprite::from_color(
+            //     Color::srgb(1.0, 1.0, 1.0),
+            //     Vec2 {
+            //         x: PADDLE_WIDTH,
+            //         y: PADDLE_HEIGHT,
+            //     },
+            // ),
+            Transform::from_xyz(0.0, 30.0, 0.0),
+            Collider::cuboid(PADDLE_WIDTH / 2., PADDLE_HEIGHT / 2.),
+            RigidBody::Dynamic,
+            // KinematicCharacterController::default(),
+            GravityScale(0.0),
+            ColliderMassProperties::Density(10.0),
+            Friction::coefficient(1.0),
+            Restitution::coefficient(2.0),
+            (
+                ActiveCollisionTypes::all(),
+                ActiveEvents::COLLISION_EVENTS,
+                Ccd::enabled(),
+            ),
+            StateScoped(AppState::Game),
+            Name::new("Paddle"),
+            InputManagerBundle::with_map(PaddleAction::default_bindings()),
+            // LockedAxes::ROTATION_LOCKED_Z,
+            Velocity::default(),
+            InheritedVisibility::default(),
+        ))
+        .with_children(|parent| {
+            const UFO_SCALE: f32 = PADDLE_HEIGHT / 60. * 2.;
+            parent.spawn(Sprite {
+                image: assets.ufo_top.clone(),
+                custom_size: Some(Vec2 { x: 193., y: 60. } * UFO_SCALE),
+                ..Default::default()
+            });
+            parent.spawn(Sprite {
+                image: assets.ufo_bottom.clone(),
+                custom_size: Some(Vec2 { x: 193., y: 60. } * UFO_SCALE),
+                ..Default::default()
+            });
+        });
 }
 
 fn move_paddle(
