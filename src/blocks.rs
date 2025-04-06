@@ -221,7 +221,7 @@ impl BlockType {
         }
     }
 
-    fn colour(&self) -> Color {
+    pub fn colour(&self) -> Color {
         match self {
             BlockType::Blue => Color::srgb(0.145, 0.290, 0.725),
             BlockType::DarkBlue => Color::srgb(0.098, 0.443, 0.675),

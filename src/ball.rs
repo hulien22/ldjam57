@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::{prelude::*, utils::HashMap};
 use bevy_rapier2d::prelude::{
     ActiveCollisionTypes, ActiveEvents, Ccd, CoefficientCombineRule, Collider, CollisionEvent,
@@ -147,14 +149,33 @@ fn process_collisions(
 
 fn spawn_trail(
     mut commands: Commands,
-    ball_query: Query<(Entity, &Transform, &Velocity), With<Ball>>,
+    ball_query: Query<(Entity, &Transform, &Velocity, &CollectedResources), With<Ball>>,
 ) {
-    for (entity, transform, velocity) in ball_query.iter() {
-        commands.trigger(BoxParticlesEvent {
-            init_position: Vec2::new(transform.translation.x, transform.translation.y),
-            target_position: transform.translation.truncate() - velocity.linvel.normalize(),
-            z_index: -5.0,
-            color: Color::WHITE,
-        });
+    let mut rng = rand::rng();
+    for (entity, transform, velocity, collected_resources) in ball_query.iter() {
+        for (block_type, count) in &collected_resources.counts {
+            let num_spawns: u32;
+            match count {
+                0 => continue,
+                1..=10 => num_spawns = 1,
+                11..=50 => num_spawns = 2,
+                _ => num_spawns = 3,
+            }
+            for _ in 0..num_spawns {
+                commands.trigger(BoxParticlesEvent {
+                    init_position: transform.translation.truncate()
+                        + Vec2::new(rng.random_range(-5.0..5.0), rng.random_range(-5.0..5.0)),
+                    target_position: transform.translation.truncate()
+                        - velocity.linvel.normalize().rotate(Vec2::from_angle(
+                            rng.random_range(-25.0_f32.to_radians()..25.0_f32.to_radians()),
+                        )),
+                    z_index: -5.0,
+                    color: block_type.colour(),
+                    size: Vec2::new(3., 3.),
+                    target_scale: Vec3::ONE,
+                    duration: Duration::from_millis(500),
+                });
+            }
+        }
     }
 }

@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::{math::VectorSpace, prelude::*};
 use bevy_rapier2d::prelude::{
     ActiveCollisionTypes, ActiveEvents, Ccd, Collider, ColliderMassProperties, CollisionEvent,
@@ -142,6 +144,9 @@ fn move_paddle(
         target_position: transform.translation.truncate() - vel.linvel.normalize(),
         z_index: -1.0,
         color: Color::srgb(0.2, 0.2, 0.2),
+        size: Vec2::new(10., 10.),
+        target_scale: Vec3::ZERO,
+        duration: Duration::from_secs(2),
     });
 
     if action_state.just_pressed(&PaddleAction::Fire) {

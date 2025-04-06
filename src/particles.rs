@@ -20,12 +20,29 @@ impl Plugin for ParticlesPlugin {
     }
 }
 
-#[derive(Event, Debug)]
+#[derive(Event, Debug, Default)]
 pub struct BoxParticlesEvent {
     pub init_position: Vec2,
     pub target_position: Vec2,
     pub z_index: f32,
     pub color: Color,
+    pub size: Vec2,
+    pub target_scale: Vec3,
+    pub duration: Duration,
+}
+
+impl BoxParticlesEvent {
+    pub fn default() -> Self {
+        Self {
+            init_position: Vec2::ZERO,
+            target_position: Vec2::ZERO,
+            z_index: 0.0,
+            color: Color::WHITE,
+            size: Vec2::ONE,
+            target_scale: Vec3::ZERO,
+            duration: Duration::from_secs(2),
+        }
+    }
 }
 
 #[derive(Component)]
@@ -47,24 +64,24 @@ fn box_particle_observer(trigger: Trigger<BoxParticlesEvent>, mut commands: Comm
     let transform = Transform::from_translation(start);
     let transform_tween_track = Tracks::new([
         Tween::new(
-            EaseFunction::ExponentialOut,
-            Duration::from_secs(2),
+            EaseFunction::Linear,
+            trigger.duration,
             TransformPositionLens {
                 start: start,
                 end: end,
             },
         ),
         Tween::new(
-            EaseFunction::ExponentialOut,
-            Duration::from_secs(2),
+            EaseFunction::Linear,
+            trigger.duration,
             TransformScaleLens {
                 start: Vec3::ONE,
-                end: Vec3::ZERO,
+                end: trigger.target_scale,
             },
         ),
         Tween::new(
-            EaseFunction::BounceInOut,
-            Duration::from_secs(2),
+            EaseFunction::Linear,
+            trigger.duration,
             TransformRotationLens {
                 start: Quat::IDENTITY,
                 end: Quat::from_axis_angle(Vec3::Z, std::f32::consts::PI / 2.),
@@ -74,7 +91,7 @@ fn box_particle_observer(trigger: Trigger<BoxParticlesEvent>, mut commands: Comm
     ]);
     let color_tween = Tween::new(
         EaseFunction::ExponentialOut,
-        Duration::from_secs(2),
+        trigger.duration,
         SpriteColorLens {
             start: trigger.color,
             end: trigger.color.with_alpha(0.0),
@@ -83,7 +100,7 @@ fn box_particle_observer(trigger: Trigger<BoxParticlesEvent>, mut commands: Comm
 
     commands.spawn((
         BoxParticle,
-        Sprite::from_color(trigger.color, Vec2 { x: 10.0, y: 10.0 }),
+        Sprite::from_color(trigger.color, trigger.size),
         transform,
         Animator::new(transform_tween_track),
         Animator::new(color_tween),
