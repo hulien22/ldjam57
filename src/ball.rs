@@ -1,11 +1,11 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 use bevy_rapier2d::prelude::{
     ActiveCollisionTypes, ActiveEvents, Ccd, CoefficientCombineRule, Collider, CollisionEvent,
     Damping, Friction, GravityScale, LockedAxes, Restitution, RigidBody, Velocity,
 };
 use rand::Rng;
 
-use crate::app_state::AppState;
+use crate::{app_state::AppState, blocks::BlockType};
 
 pub struct BallPlugin;
 
@@ -29,14 +29,35 @@ pub struct PreviousVelocity {
 }
 
 impl PreviousVelocity {
-    pub fn new(velocity: &Velocity) -> Self {
+    pub fn zero() -> Self {
+        Self { linvel: Vec2::ZERO }
+    }
+}
+
+#[derive(Component, Debug)]
+pub struct CollectedResources {
+    pub counts: HashMap<BlockType, u32>,
+}
+
+impl CollectedResources {
+    pub fn new() -> Self {
         Self {
-            linvel: velocity.linvel,
+            counts: HashMap::new(),
         }
     }
 
-    pub fn zero() -> Self {
-        Self { linvel: Vec2::ZERO }
+    pub fn add(&mut self, block_type: BlockType) {
+        *self.counts.entry(block_type).or_insert(0) += 1;
+    }
+
+    pub fn clear(&mut self) {
+        self.counts.clear();
+    }
+
+    pub fn combine(&mut self, other: &Self) {
+        for (block_type, count) in &other.counts {
+            *self.counts.entry(*block_type).or_insert(0) += count;
+        }
     }
 }
 
@@ -78,17 +99,28 @@ pub fn spawn_ball(mut commands: Commands, transform: Transform) {
                 .truncate(),
         ),
         PreviousVelocity::zero(),
+        CollectedResources::new(),
     ));
 }
 
 fn process_collisions(
-    mut query: Query<(Entity, &mut Velocity, &mut PreviousVelocity), With<Ball>>,
+    mut query: Query<
+        (
+            Entity,
+            &mut Velocity,
+            &mut PreviousVelocity,
+            &CollectedResources,
+        ),
+        With<Ball>,
+    >,
 ) {
-    for (entity, mut velocity, mut previous_velocity) in query.iter_mut() {
+    for (entity, mut velocity, mut previous_velocity, collected_resources) in query.iter_mut() {
         // Check if velocity has changed (can't use Changed<Velocity> since rapier updates it every time)
         if velocity.linvel == previous_velocity.linvel {
             continue;
         }
+
+        println!("Collected resources: {:?}", collected_resources);
 
         // Velocity has changed (collision) so lets check if we need to modify it
         let mut new_vel = velocity.linvel;

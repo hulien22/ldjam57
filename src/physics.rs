@@ -1,15 +1,16 @@
-use bevy::prelude::*;
+use bevy::{ecs::query, prelude::*};
 use bevy_rapier2d::{
     plugin::{NoUserData, RapierPhysicsPlugin},
     prelude::*,
     render::RapierDebugRenderPlugin,
 };
 
-use crate::blocks::DespawnHack;
 use crate::{
     app_state::AppState,
-    blocks::{Block, HitPoints},
+    ball::{self, CollectedResources},
+    blocks::{Block, BlockType, HitPoints},
 };
+use crate::{ball::Ball, blocks::DespawnHack};
 
 pub struct PhysicsPlugin;
 
@@ -26,29 +27,38 @@ impl Plugin for PhysicsPlugin {
 
 fn process_collisions(
     mut reader: EventReader<CollisionEvent>,
-    mut block_query: Query<(Entity, &mut HitPoints, &Transform, &Collider), (With<Block>)>,
+    mut ball_query: Query<(Entity, &mut CollectedResources), With<Ball>>,
+    mut block_query: Query<(Entity, &mut HitPoints, &Transform, &Collider, &Block), Without<Ball>>,
     mut commands: Commands,
 ) {
     for &collision in reader.read() {
         match collision {
             CollisionEvent::Started(lhs, rhs, collision_event_flags) => {
-                if let Ok((entity, mut hitpoints, transform, collider)) = block_query.get_mut(lhs) {
+                if let Ok((entity, mut hitpoints, transform, collider, block)) =
+                    block_query.get_mut(lhs)
+                {
                     on_block_hit(
+                        block,
                         hitpoints.as_mut(),
                         transform,
                         collider,
                         entity,
+                        rhs,
                         &mut commands,
+                        &mut ball_query,
                     );
-                } else if let Ok((entity, mut hitpoints, transform, collider)) =
+                } else if let Ok((entity, mut hitpoints, transform, collider, block)) =
                     block_query.get_mut(rhs)
                 {
                     on_block_hit(
+                        block,
                         hitpoints.as_mut(),
                         transform,
                         collider,
                         entity,
+                        lhs,
                         &mut commands,
+                        &mut ball_query,
                     );
                 }
             }
@@ -58,17 +68,24 @@ fn process_collisions(
 }
 
 fn on_block_hit(
+    block: &Block,
     hitpoints: &mut HitPoints,
     transform: &Transform,
     collider: &Collider,
     entity: Entity,
+    other: Entity,
     commands: &mut Commands,
+    ball_query: &mut Query<(Entity, &mut CollectedResources), With<Ball>>,
 ) {
-    // info!("block hit");
     match hitpoints.damage(1) {
         Ok(_) => {}
         Err(_) => {
             commands.entity(entity).insert(DespawnHack);
+
+            // Update CollectedResources for the corresponding ball
+            if let Ok((_, mut collected_resources)) = ball_query.get_mut(other) {
+                collected_resources.add(block.0);
+            }
         }
     }
 }

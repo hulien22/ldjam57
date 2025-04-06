@@ -127,7 +127,7 @@ fn check_for_new_block_depths(
 }
 
 #[derive(Component, Debug, Clone, Copy)]
-pub struct Block(BlockType);
+pub struct Block(pub BlockType);
 
 fn on_add_block(
     trigger: Trigger<OnAdd, Block>,
@@ -187,7 +187,7 @@ impl HitPoints {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
 pub enum BlockType {
     Basic,
     Iron,
