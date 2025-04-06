@@ -23,6 +23,9 @@ impl Plugin for AssetLoadingPlugin {
 
 #[derive(AssetCollection, Resource)]
 pub struct GameImageAssets {
+    #[asset(key = "background")]
+    pub background: Handle<Image>,
+
     #[asset(key = "crack")]
     pub crack: Handle<Image>,
 

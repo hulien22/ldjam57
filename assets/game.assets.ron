@@ -31,5 +31,8 @@
     ),
     "ufo_bottom": File (
         path: "textures/UFO_bottom.png"
+    ),
+    "background": File (
+        path: "textures/background.png"
     )
 })

@@ -9,6 +9,7 @@ pub struct BlocksPlugin;
 impl Plugin for BlocksPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(AppState::Game), spawn_blocks)
+            .add_systems(OnEnter(AppState::Game), spawn_background)
             .add_systems(
                 FixedUpdate,
                 check_for_new_block_depths.run_if(in_state(AppState::Game)),
@@ -150,6 +151,13 @@ fn on_add_block(
         //     .id();
         if let Some(mut entity_commands) = commands.get_entity(trigger.entity()) {
             entity_commands.try_insert((
+                // Sprite::from_color(
+                //     block.0.temp_colour(),
+                //     Vec2 {
+                //         x: BLOCK_SIZE,
+                //         y: BLOCK_SIZE,
+                //     },
+                // ),
                 Sprite {
                     image: block.0.image_handle(&assets),
                     custom_size: Some(Vec2 {
@@ -202,9 +210,9 @@ pub enum BlockType {
 impl BlockType {
     fn max_hitpoints(&self) -> u16 {
         match self {
-            BlockType::Blue => 1,
-            BlockType::DarkBlue => 2,
-            BlockType::LightBlue => 100,
+            BlockType::Blue => 20,
+            BlockType::DarkBlue => 5,
+            BlockType::LightBlue => 1,
             BlockType::Purple => 5,
             BlockType::LightPurple => 6,
             BlockType::Pink => 3,
@@ -213,16 +221,16 @@ impl BlockType {
         }
     }
 
-    fn temp_colour(&self) -> Color {
+    fn colour(&self) -> Color {
         match self {
-            BlockType::Blue => Color::srgb(0.322, 0.212, 0.071),
-            BlockType::DarkBlue => Color::srgb(0.4, 0.4, 0.4),
-            BlockType::LightBlue => Color::srgb(0.216, 0.106, 0.42),
-            BlockType::Purple => Color::srgb(0.216, 0.106, 0.929),
-            BlockType::LightPurple => Color::srgb(0.098, 0.541, 0.055),
-            BlockType::Red => Color::srgb(0.831, 0.149, 0.055),
-            BlockType::Pink => Color::srgb(0.984, 1.0, 0.169),
-            BlockType::Orange => Color::srgb(1.0, 0.651, 0.216),
+            BlockType::Blue => Color::srgb(0.145, 0.290, 0.725),
+            BlockType::DarkBlue => Color::srgb(0.098, 0.443, 0.675),
+            BlockType::LightBlue => Color::srgb(0.286, 0.663, 0.871),
+            BlockType::Purple => Color::srgb(0.459, 0.224, 0.784),
+            BlockType::LightPurple => Color::srgb(0.678, 0.212, 0.757),
+            BlockType::Red => Color::srgb(0.894, 0.333, 0.380),
+            BlockType::Pink => Color::srgb(0.753, 0.180, 0.373),
+            BlockType::Orange => Color::srgb(0.945, 0.663, 0.333),
         }
     }
 
@@ -285,6 +293,48 @@ fn pick_block_type(position: Vec2) -> BlockType {
     } else if a > 0.65 {
         BlockType::Pink
     } else {
+        pick_base_block_type(position)
+    }
+}
+
+fn pick_base_block_type(position: Vec2) -> BlockType {
+    let blend = 10.0
+        * Fbm::<Perlin>::new(123)
+            .set_frequency(0.4)
+            .get([position.x as f64, position.y as f64]) as f32;
+    if blend + position.y < 100.0 {
+        BlockType::LightBlue
+    } else if blend + position.y < 200.0 {
         BlockType::DarkBlue
+    } else {
+        BlockType::Blue
+    }
+}
+
+fn spawn_background(
+    mut commands: Commands,
+    assets: Res<GameImageAssets>,
+    camera_query: Query<(Entity, &Camera, &GlobalTransform)>,
+) {
+    let camera = camera_query
+        .get_single()
+        .expect("Need single camera to spawn background.");
+    let background = commands
+        .spawn((
+            Sprite {
+                image: assets.background.clone(),
+                custom_size: camera.1.logical_viewport_size(),
+                ..Default::default()
+            },
+            Transform::from_translation(Vec3 {
+                x: 0.0,
+                y: 0.0,
+                z: -100.0,
+            }),
+            Name::new("Background"),
+        ))
+        .id();
+    if let Some(mut entity_commands) = commands.get_entity(camera.0) {
+        entity_commands.add_child(background);
     }
 }
