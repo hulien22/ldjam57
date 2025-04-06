@@ -23,6 +23,8 @@ impl Plugin for AssetLoadingPlugin {
 
 #[derive(AssetCollection, Resource)]
 pub struct GameImageAssets {
+    #[asset(key = "crack")]
+    pub crack: Handle<Image>,
     #[asset(key = "dirt")]
     pub dirt: Handle<Image>,
     #[asset(key = "iron")]
