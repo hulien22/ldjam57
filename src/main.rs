@@ -10,8 +10,10 @@ use bevy::{
     window::WindowResolution,
 };
 use bevy_dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin};
+use bevy_tweening::TweeningPlugin;
 use blocks::{BLOCK_GROUP_OFFSET, BlocksPlugin, WALL_WIDTH};
 use paddle::PaddlePlugin;
+use particles::ParticlesPlugin;
 use physics::PhysicsPlugin;
 
 mod app_state;
@@ -19,6 +21,7 @@ mod asset_loading;
 mod ball;
 mod blocks;
 mod paddle;
+mod particles;
 mod physics;
 
 fn main() {
@@ -71,6 +74,8 @@ fn main() {
             },
         })
         .add_plugins(AssetLoadingPlugin)
+        .add_plugins(TweeningPlugin)
+        .add_plugins(ParticlesPlugin)
         .add_plugins(BlocksPlugin)
         .add_plugins(PaddlePlugin)
         .add_plugins(BallPlugin)
