@@ -31,6 +31,15 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
+      # https://github.com/actions/runner-images/discussions/7188#discussioncomment-6750749
+      - name: Increase swapfile
+        run: |
+          sudo swapoff -a
+          sudo fallocate -l 15G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          sudo swapon --show
       - name: Add wasm target
         run: |
           rustup target add wasm32-unknown-unknown
