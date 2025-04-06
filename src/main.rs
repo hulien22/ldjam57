@@ -2,6 +2,7 @@ use app_state::AppState;
 use asset_loading::AssetLoadingPlugin;
 use ball::BallPlugin;
 use bevy::{
+    asset::AssetMetaCheck,
     log::{Level, LogPlugin},
     prelude::*,
     render::camera::ScalingMode,
@@ -24,6 +25,11 @@ fn main() {
     App::new()
         .add_plugins(
             DefaultPlugins
+                .set(AssetPlugin {
+                    // Fix for wasm, skip meta checks
+                    meta_check: AssetMetaCheck::Never,
+                    ..default()
+                })
                 .set(LogPlugin {
                     level: Level::INFO,
                     ..Default::default()
