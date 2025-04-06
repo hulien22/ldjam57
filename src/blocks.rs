@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::{Collider, Friction, Restitution, RigidBody};
-use noisy_bevy::fbm_simplex_2d_seeded;
+use noise::{Fbm, MultiFractal, NoiseFn, Perlin};
 
 use crate::{app_state::AppState, asset_loading::GameImageAssets};
 
@@ -18,8 +18,8 @@ impl Plugin for BlocksPlugin {
     }
 }
 
-const BLOCK_SIZE: f32 = 20.0;
-const BLOCK_COUNT_WIDTH: usize = 80;
+const BLOCK_SIZE: f32 = 30.0;
+const BLOCK_COUNT_WIDTH: usize = 40;
 const BLOCK_GAP_SIZE: f32 = 0.0;
 const BLOCK_GROUP_OFFSET: f32 =
     (BLOCK_SIZE * BLOCK_COUNT_WIDTH as f32 + BLOCK_GAP_SIZE * (BLOCK_COUNT_WIDTH - 1) as f32) / 2.0;
@@ -105,6 +105,18 @@ fn on_add_block(
     assets: Res<GameImageAssets>,
 ) {
     if let Ok(block) = query.get(trigger.entity()) {
+        // let crack = commands
+        //     .spawn(
+        //         (Sprite {
+        //             image: assets.crack.clone(),
+        //             custom_size: Some(Vec2 {
+        //                 x: BLOCK_SIZE,
+        //                 y: BLOCK_SIZE,
+        //             }),
+        //             ..Default::default()
+        //         }),
+        //     )
+        //     .id();
         if let Some(mut entity_commands) = commands.get_entity(trigger.entity()) {
             entity_commands.try_insert((
                 Sprite {
@@ -117,6 +129,7 @@ fn on_add_block(
                 },
                 HitPoints(block.0.max_hitpoints()),
             ));
+            //.add_child(crack);
         }
     }
 }
@@ -176,29 +189,20 @@ impl BlockType {
     }
 }
 
-const MY_FAV_SEED: f32 = 12121.0;
-const FREQUENCY_SCALE: f32 = 0.05;
-const AMPLITUDE_SCALE: f32 = 4.0;
-const RADIUS: f32 = 30.;
-const OCTAVES: usize = 3;
-const LACUNARITY: f32 = 2.;
-const GAIN: f32 = 0.5;
-
 fn pick_block_type(position: Vec2) -> BlockType {
-    let val = (fbm_simplex_2d_seeded(
-        position * FREQUENCY_SCALE,
-        OCTAVES,
-        LACUNARITY,
-        GAIN,
-        MY_FAV_SEED,
-    ) + 1.0)
-        / 2.0;
-    info!("{}", val);
-    if val < 0.5 {
-        BlockType::Basic
-    } else if val < 0.8 {
+    let a = Fbm::<Perlin>::new(123)
+        .set_frequency(0.2)
+        .get([position.x as f64, position.y as f64]);
+    let b = Fbm::<Perlin>::new(12312412)
+        .set_frequency(0.2)
+        .get([position.x as f64, position.y as f64]);
+
+    info!("{} {}", a, b);
+    if a > 0.4 {
+        BlockType::Obsidian
+    } else if b > 0.39 {
         BlockType::Iron
     } else {
-        BlockType::Obsidian
+        BlockType::Basic
     }
 }
