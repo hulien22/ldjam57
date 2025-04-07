@@ -155,6 +155,9 @@ fn check_for_new_block_depths(
 #[derive(Component, Debug, Clone, Copy)]
 pub struct Block(pub BlockType);
 
+#[derive(Component, Debug, Clone, Copy)]
+pub struct CrackSprite;
+
 fn on_add_block(
     trigger: Trigger<OnAdd, Block>,
     query: Query<&Block>,
@@ -163,16 +166,18 @@ fn on_add_block(
 ) {
     if let Ok(block) = query.get(trigger.entity()) {
         // let crack = commands
-        //     .spawn(
-        //         (Sprite {
+        //     .spawn((
+        //         CrackSprite,
+        //         Sprite {
         //             image: assets.crack.clone(),
         //             custom_size: Some(Vec2 {
         //                 x: BLOCK_SIZE,
         //                 y: BLOCK_SIZE,
         //             }),
+        //             color: Color::srgba(1.0, 1.0, 1.0, 0.0),
         //             ..Default::default()
-        //         }),
-        //     )
+        //         },
+        //     ))
         //     .id();
         if let Some(mut entity_commands) = commands.get_entity(trigger.entity()) {
             entity_commands.try_insert((
@@ -195,7 +200,7 @@ fn on_add_block(
                 },
                 HitPoints(block.0.max_hitpoints()),
             ));
-            //.add_child(crack);
+            // .add_child(crack);
         }
     }
 }
@@ -205,7 +210,7 @@ pub struct DespawnHack;
 
 fn despawn_hack(query: Query<Entity, With<DespawnHack>>, mut commands: Commands) {
     for entity in query.iter() {
-        commands.entity(entity).try_despawn();
+        commands.entity(entity).try_despawn_recursive();
     }
 }
 
@@ -243,8 +248,8 @@ impl BlockType {
             BlockType::Purple => 5,
             BlockType::LightPurple => 6,
             BlockType::Pink => 3,
-            BlockType::Red => 6,
-            BlockType::Orange => 5,
+            BlockType::Red => 10,
+            BlockType::Orange => 20,
         }
     }
 
@@ -311,9 +316,17 @@ fn pick_block_type(position: Vec2) -> BlockType {
     } else if c > 0.65 {
         BlockType::LightPurple
     } else if d > 0.65 {
-        BlockType::Red
+        if position.y > 80.0 {
+            BlockType::Red
+        } else {
+            BlockType::Pink
+        }
     } else if e > 0.65 {
-        BlockType::Orange
+        if position.y > 160.0 {
+            BlockType::Orange
+        } else {
+            BlockType::LightPurple
+        }
     } else if f > 0.7 {
         BlockType::Purple
     } else if a > 0.65 {

@@ -87,7 +87,7 @@ fn main() {
         //         enabled: true,
         //     },
         // })
-        .add_plugins(WorldInspectorPlugin::new())
+        // .add_plugins(WorldInspectorPlugin::new())
         .add_plugins(AssetLoadingPlugin)
         .add_plugins(TweeningPlugin)
         .add_plugins(ParticlesPlugin)

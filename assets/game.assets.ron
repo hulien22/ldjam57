@@ -27,7 +27,7 @@
         path: "textures/Red_Block1.png"
     ),
     "crack": File (
-        path: "textures/crack.png"
+        path: "textures/crack1.png"
     ),
     "ufo_top": File (
         path: "textures/UFO_Top.png"

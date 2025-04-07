@@ -45,7 +45,7 @@ fn spawn_shop(mut commands: Commands, assets: Res<GameImageAssets>) {
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
-                bottom: Val::Px(300.0),
+                bottom: Val::Px(150.0),
                 ..default()
             },
             Name::new("Shop Text Background"),
@@ -295,6 +295,8 @@ fn update_shop_panels(
                         text.0 = format!("");
                     }
                 }
+            } else {
+                shop_text.0 = format!("Max upgrade!");
             }
         } else {
             sprite.color = Color::srgb(0.5, 0.5, 0.5); // Dull color
