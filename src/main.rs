@@ -12,7 +12,7 @@ use bevy::{
     prelude::*,
     render::camera::ScalingMode,
     text::FontSmoothing,
-    window::{WindowResized, WindowResolution},
+    window::{PrimaryWindow, WindowResized, WindowResolution},
 };
 use bevy_dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
@@ -224,8 +224,14 @@ fn on_resize_system(
         (Entity, &OrthographicProjection),
         (With<Camera>, Changed<OrthographicProjection>),
     >,
+    window_query: Query<&Window, With<PrimaryWindow>>,
     mut ui_scale: ResMut<UiScale>,
 ) {
+    // get window size
+    let window = window_query
+        .get_single()
+        .expect("Need single window to get size.");
+
     for (_, orthoproj) in camera_query.iter() {
         for mut sprite in bg_query.iter_mut() {
             sprite.custom_size = Some(Vec2::new(orthoproj.area.width(), orthoproj.area.height()));
@@ -247,9 +253,10 @@ fn on_resize_system(
         }
 
         // todo make this based off horizontal? use screen size
-        // // calc change in vert size
+        // calc change in vert size
         // let scale = 1280. / orthoproj.area.height();
-        // // set ui scale
-        // ui_scale.0 = scale;
+        let scale = window.resolution.width() / 1280.;
+        // set ui scale
+        ui_scale.0 = scale;
     }
 }

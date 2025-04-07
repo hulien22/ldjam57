@@ -190,7 +190,7 @@ fn on_paddle_hit(
                         BLOCK_GROUP_OFFSET,
                         ball_transform.translation.y + half_screen_size + 10.0,
                     ),
-                    z_index: -5.0,
+                    z_index: 5.0,
                     color: bloom_color,
                     size: Vec2::new(4., 4.),
                     target_scale: Vec3::ONE * 1.2,
