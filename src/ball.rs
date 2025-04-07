@@ -157,7 +157,13 @@ fn spawn_trail(
             let num_spawns: u32;
             match count {
                 0 => continue,
-                1..=10 => num_spawns = 1,
+                1..=10 => {
+                    if rng.random_range(0..10) < *count {
+                        num_spawns = 1;
+                    } else {
+                        continue;
+                    }
+                }
                 11..=50 => num_spawns = 2,
                 _ => num_spawns = 3,
             }
