@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::{Collider, CollisionGroups, Friction, Restitution, RigidBody};
 use noise::{Fbm, MultiFractal, NoiseFn, Perlin, RidgedMulti};
@@ -6,6 +8,7 @@ use crate::{
     app_state::AppState,
     asset_loading::GameImageAssets,
     ball::Ball,
+    particles::BoxParticlesEvent,
     physics::{BALL_GROUP, BLOCK_GROUP, PADDLE_GROUP, WALL_GROUP},
 };
 
@@ -360,5 +363,33 @@ fn spawn_background(
         .id();
     if let Some(mut entity_commands) = commands.get_entity(camera.0) {
         entity_commands.add_child(background);
+    }
+}
+
+pub fn block_break(block_type: BlockType, transform: &Transform, commands: &mut Commands) {
+    const NUM_PARTICLES: usize = 10;
+    let mut rng = rand::rng();
+    let bloom_color = Color::srgba(
+        block_type.colour().to_srgba().red * 1.1,
+        block_type.colour().to_srgba().green * 1.1,
+        block_type.colour().to_srgba().blue * 1.1,
+        1.0,
+    );
+
+    for i in 0..NUM_PARTICLES {
+        let angle = i as f32 * (std::f32::consts::PI * 2.0 / NUM_PARTICLES as f32);
+        let x = angle.cos() * BLOCK_SIZE / 2.0;
+        let y = angle.sin() * BLOCK_SIZE / 2.0;
+
+        commands.trigger(BoxParticlesEvent {
+            init_position: transform.translation.truncate(),
+            // + Vec2::new(rng.random_range(-5.0..5.0), rng.random_range(-5.0..5.0)),
+            target_position: transform.translation.truncate() + Vec2::new(x, y),
+            z_index: -5.0,
+            color: bloom_color,
+            size: Vec2::new(BLOCK_SIZE / 4.0, BLOCK_SIZE / 4.0),
+            target_scale: Vec3::ONE,
+            duration: Duration::from_millis(500),
+        });
     }
 }

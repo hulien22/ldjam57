@@ -8,7 +8,7 @@ use bevy_rapier2d::{
 use crate::{
     app_state::AppState,
     ball::{self, CollectedResources},
-    blocks::{Block, BlockType, HitPoints},
+    blocks::{Block, BlockType, HitPoints, block_break},
     paddle::Paddle,
 };
 use crate::{ball::Ball, blocks::DespawnHack};
@@ -99,6 +99,8 @@ fn on_block_hit(
 
                 // Update CollectedResources for the corresponding ball
                 collected_resources.add(block.0);
+
+                block_break(block.0, transform, commands);
             }
         }
     }
