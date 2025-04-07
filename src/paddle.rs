@@ -61,9 +61,13 @@ pub struct Paddle;
 #[derive(Component)]
 pub struct NumBalls(pub u32);
 
+#[derive(Component)]
+pub struct PaddleBottomSprite;
+
 // TODO height won't change, but width will so need to move to a resource
 const PADDLE_WIDTH: f32 = 32.2;
 const PADDLE_HEIGHT: f32 = 5.0;
+const UFO_SCALE: f32 = PADDLE_HEIGHT / 60. * 2.;
 
 const PADDLE_MAX_HEIGHT: f32 = 500.0;
 const PADDLE_BLOOM: f32 = 1.4;
@@ -80,7 +84,7 @@ fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
             //     },
             // ),
             Transform::from_xyz(0.0, 30.0, 0.0),
-            Collider::cuboid(PADDLE_WIDTH / 2., PADDLE_HEIGHT / 2.),
+            Collider::cuboid(PADDLE_WIDTH / 2., PADDLE_HEIGHT),
             RigidBody::Dynamic,
             // KinematicCharacterController::default(),
             (
@@ -103,19 +107,21 @@ fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
             NumBalls(3),
         ))
         .with_children(|parent| {
-            const UFO_SCALE: f32 = PADDLE_HEIGHT / 60. * 2.;
             parent.spawn(Sprite {
                 image: assets.ufo_top.clone(),
                 custom_size: Some(Vec2 { x: 193., y: 60. } * UFO_SCALE),
                 color: Color::srgb(PADDLE_BLOOM, PADDLE_BLOOM, PADDLE_BLOOM),
                 ..Default::default()
             });
-            parent.spawn(Sprite {
-                image: assets.ufo_bottom.clone(),
-                custom_size: Some(Vec2 { x: 193., y: 60. } * UFO_SCALE),
-                color: Color::srgb(PADDLE_BLOOM, PADDLE_BLOOM, PADDLE_BLOOM),
-                ..Default::default()
-            });
+            parent.spawn((
+                Sprite {
+                    image: assets.ufo_bottom.clone(),
+                    custom_size: Some(Vec2 { x: 193., y: 60. } * UFO_SCALE),
+                    color: Color::srgb(PADDLE_BLOOM, PADDLE_BLOOM, PADDLE_BLOOM),
+                    ..Default::default()
+                },
+                PaddleBottomSprite,
+            ));
             parent.spawn((
                 Collider::ball(1.),
                 ActiveCollisionTypes::all(),
@@ -129,6 +135,7 @@ fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
 fn move_paddle(
     mut query: Query<
         (
+            Entity,
             &ActionState<PaddleAction>,
             &mut Transform,
             &mut Velocity,
@@ -141,10 +148,17 @@ fn move_paddle(
     mut commands: Commands,
     assets: Res<GameImageAssets>,
     mut shop_panel_query: Query<(&ShopPanel)>,
+    mut paddle_bottom_query: Query<(&PaddleBottomSprite, &mut Sprite)>,
     mut stats: ResMut<ShopStats>,
 ) {
-    let (action_state, mut transform, mut vel, mut num_balls, mut collected_resources) =
-        query.get_single_mut().expect("Failed to get paddle entity");
+    let (
+        paddle_entity,
+        action_state,
+        mut transform,
+        mut vel,
+        mut num_balls,
+        mut collected_resources,
+    ) = query.get_single_mut().expect("Failed to get paddle entity");
 
     // lerp to target velocity
     let mut target_lin_vel: Vec2 = Vec2::ZERO;
@@ -191,15 +205,47 @@ fn move_paddle(
                 continue;
             }
 
+            if shop_panel.is_refresh {
+                // refresh ball count
+                num_balls.0 = stats.capacity() as u32;
+                commands.trigger(UpdateStatsBarBallsEvent { balls: num_balls.0 });
+                break;
+            }
+
             // try to buy
             if let Some(cost) = match shop_panel.item {
                 ShopItem::Damage => stats.damage_cost(),
                 ShopItem::Speed => stats.speed_cost(),
+                ShopItem::Capacity => stats.capacity_cost(),
+                ShopItem::Size => stats.size_cost(),
             } {
                 if try_buy(&cost, &mut collected_resources.counts) {
                     match shop_panel.item {
                         ShopItem::Damage => stats.damage_level += 1,
                         ShopItem::Speed => stats.speed_level += 1,
+                        ShopItem::Capacity => stats.capacity_level += 1,
+                        ShopItem::Size => {
+                            stats.size_level += 1;
+                            // update paddle size
+                            for (_, mut sprite) in paddle_bottom_query.iter_mut() {
+                                // let vec = Vec2 { x: 193., y: 60. } * UFO_SCALE
+                                //     + Vec2::new(stats.size(), 0.0);
+                                sprite.custom_size =
+                                    Some(Vec2::new(stats.size(), 60.0 * UFO_SCALE));
+                            }
+                            // if let Some(mut cuboid) = collider.as_cuboid_mut() {
+                            //     cuboid.set_half_extents(Vec2::new(
+                            //         stats.size() / 2.,
+                            //         PADDLE_HEIGHT / 2.,
+                            //     ));
+                            // } else {
+                            //     info!("Failed to get cuboid from collider: {:?}", collider);
+                            // }
+                            commands.entity(paddle_entity).remove::<Collider>();
+                            commands
+                                .entity(paddle_entity)
+                                .insert(Collider::cuboid(stats.size() / 2., PADDLE_HEIGHT));
+                        }
                     }
                     commands.trigger(UpdateStatsBarResourcesEvent);
                     commands.trigger(UpdateShopPanelsEvent);
