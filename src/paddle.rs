@@ -7,6 +7,7 @@ use bevy_rapier2d::prelude::{
     RigidBody, Velocity,
 };
 use leafwing_input_manager::{input_map, prelude::*};
+use rand::Rng;
 
 use crate::{
     app_state::AppState,
@@ -42,7 +43,8 @@ impl Plugin for PaddlePlugin {
         app.add_plugins(InputManagerPlugin::<PaddleAction>::default())
             .add_systems(OnEnter(AppState::Game), spawn_paddle)
             .add_systems(FixedUpdate, move_paddle.run_if(in_state(AppState::Game)))
-            .add_systems(PostUpdate, follow_cam.run_if(in_state(AppState::Game)));
+            .add_systems(PostUpdate, follow_cam.run_if(in_state(AppState::Game)))
+            .add_systems(Update, spawn_particles.run_if(in_state(AppState::Game)));
     }
 }
 
@@ -140,16 +142,6 @@ fn move_paddle(
         vel.angvel = FloatExt::lerp(vel.angvel, target_ang_vel, ang_damping);
     }
 
-    commands.trigger(BoxParticlesEvent {
-        init_position: Vec2::new(transform.translation.x, transform.translation.y),
-        target_position: transform.translation.truncate() - vel.linvel.normalize(),
-        z_index: -1.0,
-        color: Color::srgb(0.2, 0.2, 0.2),
-        size: Vec2::new(10., 10.),
-        target_scale: Vec3::ZERO,
-        duration: Duration::from_secs(2),
-    });
-
     if action_state.just_pressed(&PaddleAction::Fire) {
         spawn_ball(commands, transform.clone());
     }
@@ -173,4 +165,22 @@ fn follow_cam(
         paddle_transform.translation.y,
         FOLLOW_SPEED * time.delta_secs(),
     );
+}
+
+fn spawn_particles(
+    mut commands: Commands,
+    mut query: Query<(&mut Transform, &mut Velocity, &CollectedResources), With<Paddle>>,
+) {
+    let (transform, velocity, collected_resources) =
+        query.get_single_mut().expect("Failed to get paddle entity");
+
+    commands.trigger(BoxParticlesEvent {
+        init_position: Vec2::new(transform.translation.x, transform.translation.y),
+        target_position: transform.translation.truncate() - velocity.linvel.normalize(),
+        z_index: -10.0,
+        color: Color::srgb(0.2, 0.2, 0.2),
+        size: Vec2::new(10., 10.),
+        target_scale: Vec3::ZERO,
+        duration: Duration::from_secs(2),
+    });
 }
