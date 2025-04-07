@@ -91,3 +91,5 @@ getrandom = { version = "0.3", features = [
 # bevy_old_tv_shader = { git = "https://github.com/Defernus/bevy_old_tv_shader.git", version = "0.2.0" }
 bevy_hui = { version = "0.3.0" }
 bevy_kira_audio = { version = "0.22.0", features = ["ogg", "mp3"] }
+strum = "0.27"
+strum_macros = "0.27"

@@ -22,6 +22,7 @@ use paddle::PaddlePlugin;
 use particles::ParticlesPlugin;
 use physics::PhysicsPlugin;
 use shop::ShopPlugin;
+use statsbar::{STATS_BAR_HEIGHT, StatsBarPlugin};
 use ui::UiPlugin;
 
 mod app_state;
@@ -33,6 +34,7 @@ mod paddle;
 mod particles;
 mod physics;
 mod shop;
+mod statsbar;
 mod ui;
 
 fn main() {
@@ -74,17 +76,17 @@ fn main() {
                     ..default()
                 }),
         )
-        .add_plugins(FpsOverlayPlugin {
-            config: FpsOverlayConfig {
-                text_config: TextFont {
-                    font_size: 12.0,
-                    font: default(),
-                    font_smoothing: FontSmoothing::default(),
-                },
-                text_color: Color::srgb(0.0, 1.0, 0.0),
-                enabled: true,
-            },
-        })
+        // .add_plugins(FpsOverlayPlugin {
+        //     config: FpsOverlayConfig {
+        //         text_config: TextFont {
+        //             font_size: 12.0,
+        //             font: default(),
+        //             font_smoothing: FontSmoothing::default(),
+        //         },
+        //         text_color: Color::srgb(0.0, 1.0, 0.0),
+        //         enabled: true,
+        //     },
+        // })
         .add_plugins(WorldInspectorPlugin::new())
         .add_plugins(AssetLoadingPlugin)
         .add_plugins(TweeningPlugin)
@@ -94,6 +96,7 @@ fn main() {
         .add_plugins(BallPlugin)
         .add_plugins(PhysicsPlugin)
         .add_plugins(UiPlugin)
+        .add_plugins(StatsBarPlugin)
         .add_plugins(ShopPlugin)
         .add_plugins(InternalAudioPlugin)
         .add_systems(Startup, setup_camera)
@@ -138,6 +141,10 @@ fn setup_camera(mut commands: Commands) {
 
 #[derive(Component)]
 struct Background;
+#[derive(Component)]
+pub struct BackgroundVertWall;
+#[derive(Component)]
+pub struct BackgroundHoriWall;
 
 fn spawn_background(
     mut commands: Commands,
@@ -163,21 +170,85 @@ fn spawn_background(
             Name::new("Background"),
         ))
         .id();
+    let wall1 = commands
+        .spawn((
+            BackgroundVertWall,
+            Sprite::from_color(
+                Color::srgb(33.0 / 256.0, 33.0 / 256.0, 33.0 / 256.0),
+                Vec2::new(WALL_WIDTH, 720.0),
+            ),
+            Transform::from_translation(Vec3 {
+                x: -(BLOCK_GROUP_OFFSET + (WALL_WIDTH / 2.0)),
+                y: 0.0,
+                z: -99.0,
+            }),
+            Name::new("BackgroundWall"),
+        ))
+        .id();
+    let wall2 = commands
+        .spawn((
+            BackgroundVertWall,
+            Sprite::from_color(
+                Color::srgb(33.0 / 256.0, 33.0 / 256.0, 33.0 / 256.0),
+                Vec2::new(WALL_WIDTH, 720.0),
+            ),
+            Transform::from_translation(Vec3 {
+                x: (BLOCK_GROUP_OFFSET + (WALL_WIDTH / 2.0)),
+                y: 0.0,
+                z: -99.0,
+            }),
+            Name::new("BackgroundWall"),
+        ))
+        .id();
+
+    // Add as children of the camera so they move with it
     if let Some(mut entity_commands) = commands.get_entity(camera.0) {
         entity_commands.add_child(background);
+        entity_commands.add_child(wall1);
+        entity_commands.add_child(wall2);
     }
 }
 
 fn on_resize_system(
     mut bg_query: Query<&mut Sprite, With<Background>>,
+    mut bgvertwall_query: Query<&mut Sprite, (With<BackgroundVertWall>, Without<Background>)>,
+    mut bghoriwall_query: Query<
+        (&mut Sprite, &mut Transform),
+        (
+            With<BackgroundHoriWall>,
+            Without<Background>,
+            Without<BackgroundVertWall>,
+        ),
+    >,
     camera_query: Query<
         (Entity, &OrthographicProjection),
         (With<Camera>, Changed<OrthographicProjection>),
     >,
+    mut ui_scale: ResMut<UiScale>,
 ) {
     for (_, orthoproj) in camera_query.iter() {
         for mut sprite in bg_query.iter_mut() {
             sprite.custom_size = Some(Vec2::new(orthoproj.area.width(), orthoproj.area.height()));
         }
+        for mut sprite in bgvertwall_query.iter_mut() {
+            // sprite.custom_size = Some(Vec2::new(WALL_WIDTH, orthoproj.area.height()));
+
+            // get previous size
+            if let Some(size) = sprite.custom_size {
+                sprite.custom_size = Some(Vec2::new(size.x, orthoproj.area.height()));
+            }
+        }
+        for (mut sprite, mut transform) in bghoriwall_query.iter_mut() {
+            // get previous size
+            if let Some(size) = sprite.custom_size {
+                sprite.custom_size = Some(Vec2::new(orthoproj.area.width(), size.y));
+                transform.translation.y = orthoproj.area.height() / 2.0 - STATS_BAR_HEIGHT / 2.0;
+            }
+        }
+
+        // calc change in vert size
+        let scale = 1280. / orthoproj.area.height();
+        // set ui scale
+        ui_scale.0 = scale;
     }
 }
