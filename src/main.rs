@@ -20,6 +20,8 @@ use blocks::{BLOCK_GROUP_OFFSET, BlocksPlugin, WALL_WIDTH};
 use paddle::PaddlePlugin;
 use particles::ParticlesPlugin;
 use physics::PhysicsPlugin;
+use shop::ShopPlugin;
+use ui::UiPlugin;
 
 mod app_state;
 mod asset_loading;
@@ -28,12 +30,15 @@ mod blocks;
 mod paddle;
 mod particles;
 mod physics;
+mod shop;
+mod ui;
 
 fn main() {
     App::new()
         .add_plugins(
             DefaultPlugins
                 .set(AssetPlugin {
+                    watch_for_changes_override: Some(true),
                     // Fix for wasm, skip meta checks
                     meta_check: AssetMetaCheck::Never,
                     ..default()
@@ -86,6 +91,8 @@ fn main() {
         .add_plugins(PaddlePlugin)
         .add_plugins(BallPlugin)
         .add_plugins(PhysicsPlugin)
+        .add_plugins(UiPlugin)
+        .add_plugins(ShopPlugin)
         .add_systems(Startup, setup_camera)
         .init_state::<AppState>()
         .enable_state_scoped_entities::<AppState>()
