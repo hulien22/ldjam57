@@ -103,7 +103,10 @@ pub fn spawn_ball(mut commands: Commands, transform: Transform, assets: Res<Game
             ActiveCollisionTypes::all(),
             ActiveEvents::COLLISION_EVENTS,
             Ccd::enabled(),
-            CollisionGroups::new(BALL_GROUP, WALL_GROUP | PADDLE_GROUP | BLOCK_GROUP),
+            CollisionGroups::new(
+                BALL_GROUP,
+                WALL_GROUP | PADDLE_GROUP | BLOCK_GROUP | BALL_GROUP,
+            ),
         ),
         StateScoped(AppState::Game),
         Name::new("Ball"),
