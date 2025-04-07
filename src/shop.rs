@@ -69,7 +69,7 @@ impl ShopStats {
     }
 
     pub fn capacity(&self) -> u32 {
-        self.capacity_level as u32 * 10
+        self.capacity_level as u32 * 3
     }
 
     pub fn capacity_cost(&self) -> Option<HashMap<BlockType, u32>> {

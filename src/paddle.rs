@@ -191,6 +191,13 @@ fn move_paddle(
                 continue;
             }
 
+            if shop_panel.is_refresh {
+                // refresh ball count
+                num_balls.0 = stats.capacity() as u32;
+                commands.trigger(UpdateStatsBarBallsEvent { balls: num_balls.0 });
+                break;
+            }
+
             // try to buy
             if let Some(cost) = match shop_panel.item {
                 ShopItem::Damage => stats.damage_cost(),

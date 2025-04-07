@@ -26,6 +26,7 @@ pub struct ShopPanel {
     pub enabled: bool,
     pub item: ShopItem,
     pub upgrade: String,
+    pub is_refresh: bool,
 }
 
 #[derive(Component)]
@@ -44,7 +45,7 @@ fn spawn_shop(mut commands: Commands, assets: Res<GameImageAssets>) {
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::Center,
-                bottom: Val::Px(80.0),
+                bottom: Val::Px(300.0),
                 ..default()
             },
             Name::new("Shop Text Background"),
@@ -94,6 +95,7 @@ fn spawn_shop(mut commands: Commands, assets: Res<GameImageAssets>) {
                 enabled: false,
                 item: ShopItem::Speed,
                 upgrade: "Speed Upgrade".to_string(),
+                is_refresh: false,
             },
             Transform::from_xyz(-100.0, 300.0, -50.0),
             Name::new("Speed Upgrade"),
@@ -124,6 +126,7 @@ fn spawn_shop(mut commands: Commands, assets: Res<GameImageAssets>) {
                 enabled: false,
                 item: ShopItem::Damage,
                 upgrade: "Ball Damage Upgrade".to_string(),
+                is_refresh: false,
             },
             Transform::from_xyz(-200.0, 300.0, -50.0),
             Name::new("Ball Upgrade"),
@@ -154,6 +157,7 @@ fn spawn_shop(mut commands: Commands, assets: Res<GameImageAssets>) {
                 enabled: false,
                 item: ShopItem::Capacity,
                 upgrade: "Capacity Upgrade".to_string(),
+                is_refresh: false,
             },
             Transform::from_xyz(-300.0, 300.0, -50.0),
             Name::new("Capacity Upgrade"),
@@ -184,6 +188,7 @@ fn spawn_shop(mut commands: Commands, assets: Res<GameImageAssets>) {
                 enabled: false,
                 item: ShopItem::Size,
                 upgrade: "Size Upgrade".to_string(),
+                is_refresh: false,
             },
             Transform::from_xyz(-400.0, 300.0, -50.0),
             Name::new("Size Upgrade"),
@@ -202,6 +207,39 @@ fn spawn_shop(mut commands: Commands, assets: Res<GameImageAssets>) {
                 ..Default::default()
             },
             Transform::from_xyz(0., -6.0, 1.0),
+        ));
+
+    // refresh panel
+    commands
+        .spawn((
+            Sprite {
+                image: assets.shop_background.clone(),
+                custom_size: Some(Vec2::new(SHOP_PANEL_WIDTH * 1.5, SHOP_PANEL_WIDTH * 1.5)),
+                ..Default::default()
+            },
+            ShopPanel {
+                enabled: false,
+                item: ShopItem::Damage, // doesn't matter
+                upgrade: "Refresh".to_string(),
+                is_refresh: true,
+            },
+            Transform::from_xyz(100.0, 300.0, -50.0),
+            Name::new("Refresh"),
+            (
+                Collider::cuboid(SHOP_PANEL_WIDTH * 1.5 / 2.0, SHOP_PANEL_WIDTH * 1.5 / 2.0),
+                ActiveCollisionTypes::all(),
+                ActiveEvents::COLLISION_EVENTS,
+                Sensor,
+                CollisionGroups::new(PADDLE_SHOP_GROUP, PADDLE_SHOP_GROUP),
+            ),
+        ))
+        .with_child((
+            Sprite {
+                image: assets.refresh_icon.clone(),
+                custom_size: Some(Vec2::new(100.0, 100.0)),
+                ..Default::default()
+            },
+            Transform::from_xyz(0., -15.0, 1.0),
         ));
 
     commands.trigger(UpdateShopPanelsEvent);
@@ -224,14 +262,23 @@ fn update_shop_panels(
     let mut any_enabled = false;
     for (mut sprite, shop_panel) in query.iter_mut() {
         if shop_panel.enabled {
+            any_enabled = true;
+            sprite.color = Color::WHITE; // Normal color
+
+            if shop_panel.is_refresh {
+                shop_text.0 = format!("Press <E> to reload balls!");
+                for (mut text, block_type) in shop_cost_query.iter_mut() {
+                    text.0 = format!("");
+                }
+                continue;
+            }
+
             let level = match shop_panel.item {
                 ShopItem::Damage => shop_stats.damage_level,
                 ShopItem::Speed => shop_stats.speed_level,
                 ShopItem::Capacity => shop_stats.capacity_level,
                 ShopItem::Size => shop_stats.size_level,
             };
-            any_enabled = true;
-            sprite.color = Color::WHITE; // Normal color
 
             shop_text.0 = format!("Press <E> to buy {} (level {})", shop_panel.upgrade, level);
             // update costs
