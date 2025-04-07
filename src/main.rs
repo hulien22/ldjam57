@@ -1,5 +1,5 @@
 use app_state::AppState;
-use asset_loading::AssetLoadingPlugin;
+use asset_loading::{AssetLoadingPlugin, GameImageAssets};
 use ball::BallPlugin;
 use bevy::{
     asset::AssetMetaCheck,
@@ -11,7 +11,7 @@ use bevy::{
     prelude::*,
     render::camera::ScalingMode,
     text::FontSmoothing,
-    window::WindowResolution,
+    window::{WindowResized, WindowResolution},
 };
 use bevy_dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
@@ -94,6 +94,8 @@ fn main() {
         .add_plugins(UiPlugin)
         .add_plugins(ShopPlugin)
         .add_systems(Startup, setup_camera)
+        .add_systems(OnEnter(AppState::Game), spawn_background)
+        .add_systems(Update, on_resize_system)
         .init_state::<AppState>()
         .enable_state_scoped_entities::<AppState>()
         .run();
@@ -129,4 +131,50 @@ fn setup_camera(mut commands: Commands) {
             ..OrthographicProjection::default_2d()
         },
     ));
+}
+
+#[derive(Component)]
+struct Background;
+
+fn spawn_background(
+    mut commands: Commands,
+    assets: Res<GameImageAssets>,
+    camera_query: Query<(Entity, &Camera, &GlobalTransform)>,
+) {
+    let camera = camera_query
+        .get_single()
+        .expect("Need single camera to spawn background.");
+    let background = commands
+        .spawn((
+            Background,
+            Sprite {
+                image: assets.background.clone(),
+                custom_size: camera.1.logical_viewport_size(),
+                ..Default::default()
+            },
+            Transform::from_translation(Vec3 {
+                x: 0.0,
+                y: 0.0,
+                z: -100.0,
+            }),
+            Name::new("Background"),
+        ))
+        .id();
+    if let Some(mut entity_commands) = commands.get_entity(camera.0) {
+        entity_commands.add_child(background);
+    }
+}
+
+fn on_resize_system(
+    mut bg_query: Query<&mut Sprite, With<Background>>,
+    camera_query: Query<
+        (Entity, &OrthographicProjection),
+        (With<Camera>, Changed<OrthographicProjection>),
+    >,
+) {
+    for (_, orthoproj) in camera_query.iter() {
+        for mut sprite in bg_query.iter_mut() {
+            sprite.custom_size = Some(Vec2::new(orthoproj.area.width(), orthoproj.area.height()));
+        }
+    }
 }

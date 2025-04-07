@@ -17,7 +17,6 @@ pub struct BlocksPlugin;
 impl Plugin for BlocksPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(AppState::Game), spawn_blocks)
-            .add_systems(OnEnter(AppState::Game), spawn_background)
             .add_systems(
                 FixedUpdate,
                 check_for_new_block_depths.run_if(in_state(AppState::Game)),
@@ -27,7 +26,7 @@ impl Plugin for BlocksPlugin {
     }
 }
 
-pub const WALL_WIDTH: f32 = 50.0;
+pub const WALL_WIDTH: f32 = 10.0;
 pub const BLOCK_SIZE: f32 = 30.0;
 pub const BLOCK_COUNT_WIDTH: usize = 40;
 pub const BLOCK_GAP_SIZE: f32 = 0.0;
@@ -334,34 +333,6 @@ fn pick_base_block_type(position: Vec2) -> BlockType {
         BlockType::DarkBlue
     } else {
         BlockType::Blue
-    }
-}
-
-fn spawn_background(
-    mut commands: Commands,
-    assets: Res<GameImageAssets>,
-    camera_query: Query<(Entity, &Camera, &GlobalTransform)>,
-) {
-    let camera = camera_query
-        .get_single()
-        .expect("Need single camera to spawn background.");
-    let background = commands
-        .spawn((
-            Sprite {
-                image: assets.background.clone(),
-                custom_size: camera.1.logical_viewport_size(),
-                ..Default::default()
-            },
-            Transform::from_translation(Vec3 {
-                x: 0.0,
-                y: 0.0,
-                z: -100.0,
-            }),
-            Name::new("Background"),
-        ))
-        .id();
-    if let Some(mut entity_commands) = commands.get_entity(camera.0) {
-        entity_commands.add_child(background);
     }
 }
 
