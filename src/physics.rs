@@ -15,6 +15,11 @@ use crate::{ball::Ball, blocks::DespawnHack};
 
 pub struct PhysicsPlugin;
 
+pub const BLOCK_GROUP: bevy_rapier2d::geometry::Group = Group::GROUP_1;
+pub const BALL_GROUP: bevy_rapier2d::geometry::Group = Group::GROUP_2;
+pub const PADDLE_GROUP: bevy_rapier2d::geometry::Group = Group::GROUP_3;
+pub const WALL_GROUP: bevy_rapier2d::geometry::Group = Group::GROUP_4;
+
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(32.0))
@@ -85,13 +90,14 @@ fn on_block_hit(
     commands: &mut Commands,
     ball_query: &mut Query<(Entity, &mut CollectedResources), With<Ball>>,
 ) {
-    match hitpoints.damage(1) {
-        Ok(_) => {}
-        Err(_) => {
-            commands.entity(entity).insert(DespawnHack);
+    // skip if we aren't hitting a ball
+    if let Ok((_, mut collected_resources)) = ball_query.get_mut(other) {
+        match hitpoints.damage(1) {
+            Ok(_) => {}
+            Err(_) => {
+                commands.entity(entity).insert(DespawnHack);
 
-            // Update CollectedResources for the corresponding ball
-            if let Ok((_, mut collected_resources)) = ball_query.get_mut(other) {
+                // Update CollectedResources for the corresponding ball
                 collected_resources.add(block.0);
             }
         }

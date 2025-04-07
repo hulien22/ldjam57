@@ -1,8 +1,13 @@
 use bevy::prelude::*;
-use bevy_rapier2d::prelude::{Collider, Friction, Restitution, RigidBody};
+use bevy_rapier2d::prelude::{Collider, CollisionGroups, Friction, Restitution, RigidBody};
 use noise::{Fbm, MultiFractal, NoiseFn, Perlin, RidgedMulti};
 
-use crate::{app_state::AppState, asset_loading::GameImageAssets};
+use crate::{
+    app_state::AppState,
+    asset_loading::GameImageAssets,
+    ball::Ball,
+    physics::{BALL_GROUP, BLOCK_GROUP, PADDLE_GROUP, WALL_GROUP},
+};
 
 pub struct BlocksPlugin;
 
@@ -40,6 +45,7 @@ fn spawn_blocks(mut commands: Commands) {
         Friction::coefficient(0.0),
         Restitution::coefficient(1.1),
         Collider::halfspace(Vec2 { x: -1.0, y: 0.0 }).unwrap(),
+        CollisionGroups::new(WALL_GROUP, BALL_GROUP | PADDLE_GROUP),
     ));
     commands.spawn((
         Transform::from_xyz(-BLOCK_GROUP_OFFSET, 0.0, 0.0),
@@ -47,6 +53,7 @@ fn spawn_blocks(mut commands: Commands) {
         Friction::coefficient(0.0),
         Restitution::coefficient(1.1),
         Collider::halfspace(Vec2 { x: 1.0, y: 0.0 }).unwrap(),
+        CollisionGroups::new(WALL_GROUP, BALL_GROUP | PADDLE_GROUP),
     ));
 
     // UI walls
@@ -98,11 +105,13 @@ fn spawn_block_at(j: usize, i: usize, commands: &mut Commands) {
         Block(block_type),
         StateScoped(AppState::Game),
         Name::new(format!("Block {} {}", i, j)),
+        CollisionGroups::new(BLOCK_GROUP, BALL_GROUP | PADDLE_GROUP),
     ));
 }
 
 fn check_for_new_block_depths(
     camera_query: Query<(&Camera, &GlobalTransform)>,
+    balls_query: Query<&Transform, With<Ball>>,
     mut deepest_layer: Local<usize>,
     mut commands: Commands,
 ) {
@@ -115,9 +124,22 @@ fn check_for_new_block_depths(
     let viewport_position = camera
         .viewport_to_world_2d(camera_transform, camera.logical_viewport_size().unwrap())
         .expect("Need viewport position to check depth.");
-    let current_depth =
+
+    const BUFFER: usize = 2;
+    let mut current_depth =
         ((viewport_position.y - BLOCK_SIZE / 2.0) / -(BLOCK_SIZE + BLOCK_GAP_SIZE)).ceil() as usize;
+
+    // iterate over balls to see if any are deeper than current depth
+    for ball in balls_query.iter() {
+        let ball_depth = (ball.translation.y / -(BLOCK_SIZE + BLOCK_GAP_SIZE)).ceil() as usize;
+        if ball_depth > current_depth {
+            current_depth = ball_depth;
+        }
+    }
+    current_depth += BUFFER;
+
     if current_depth > *deepest_layer {
+        println!("Current depth: {}", current_depth);
         for l in *deepest_layer..current_depth {
             for j in 0..BLOCK_COUNT_WIDTH {
                 spawn_block_at(j, l, &mut commands);
@@ -277,7 +299,7 @@ fn pick_block_type(position: Vec2) -> BlockType {
         .set_frequency(0.04)
         .get([position.x as f64, position.y as f64]);
 
-    info!("{} {}", a, b);
+    // info!("{} {}", a, b);
     if g > 0.65 {
         BlockType::Blue
     } else if b > 0.65 {

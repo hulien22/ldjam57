@@ -3,11 +3,17 @@ use std::time::Duration;
 use bevy::{prelude::*, utils::HashMap};
 use bevy_rapier2d::prelude::{
     ActiveCollisionTypes, ActiveEvents, Ccd, CoefficientCombineRule, Collider, CollisionEvent,
-    Damping, Friction, GravityScale, LockedAxes, Restitution, RigidBody, Velocity,
+    CollisionGroups, Damping, Friction, GravityScale, LockedAxes, Restitution, RigidBody, Velocity,
 };
 use rand::Rng;
 
-use crate::{app_state::AppState, blocks::BlockType, particles::BoxParticlesEvent};
+use crate::{
+    app_state::AppState,
+    asset_loading::GameImageAssets,
+    blocks::BlockType,
+    particles::BoxParticlesEvent,
+    physics::{BALL_GROUP, BLOCK_GROUP, PADDLE_GROUP, WALL_GROUP},
+};
 
 pub struct BallPlugin;
 
@@ -16,7 +22,7 @@ impl Plugin for BallPlugin {
         app.add_systems(
             // TODO verify if we need to do any ordering here..
             FixedUpdate,
-            process_collisions.run_if(in_state(AppState::Game)),
+            override_physics.run_if(in_state(AppState::Game)),
         )
         .add_systems(Update, spawn_trail.run_if(in_state(AppState::Game)));
     }
@@ -64,11 +70,16 @@ impl CollectedResources {
     }
 }
 
-pub fn spawn_ball(mut commands: Commands, transform: Transform) {
+pub fn spawn_ball(mut commands: Commands, transform: Transform, assets: Res<GameImageAssets>) {
     let mut rng = rand::rng();
     commands.spawn((
         Ball,
-        Sprite::from_color(Color::srgb(0.5, 0.5 as f32, 0.5), Vec2 { x: 10.0, y: 10.0 }),
+        // Sprite::from_color(Color::srgb(0.5, 0.5 as f32, 0.5), Vec2 { x: 10.0, y: 10.0 }),
+        Sprite {
+            image: assets.ball.clone(),
+            custom_size: Some(Vec2::new(10.0, 10.0)),
+            ..Default::default()
+        },
         Transform::from_xyz(transform.translation.x, transform.translation.y - 5.0, 0.0),
         Collider::ball(5.0),
         RigidBody::Dynamic,
@@ -92,38 +103,52 @@ pub fn spawn_ball(mut commands: Commands, transform: Transform) {
             ActiveCollisionTypes::all(),
             ActiveEvents::COLLISION_EVENTS,
             Ccd::enabled(),
+            CollisionGroups::new(BALL_GROUP, WALL_GROUP | PADDLE_GROUP | BLOCK_GROUP),
         ),
         StateScoped(AppState::Game),
         Name::new("Ball"),
         Velocity::linear(
             transform
                 .rotation
-                .mul_vec3(Vec3::new(rng.random_range(-10.0..10.0), -100.0, 0.0))
-                .truncate(),
+                .mul_vec3(Vec3::new(0.0, -100.0, 0.0))
+                .truncate()
+                .rotate(Vec2::from_angle(
+                    rng.random_range(-5.0_f32.to_radians()..5.0_f32.to_radians()),
+                )),
         ),
         PreviousVelocity::zero(),
         CollectedResources::new(),
     ));
 }
 
-fn process_collisions(
+fn override_physics(
     mut query: Query<
         (
             Entity,
+            &Transform,
             &mut Velocity,
             &mut PreviousVelocity,
             &CollectedResources,
         ),
         With<Ball>,
     >,
+    mut commands: Commands,
 ) {
-    for (entity, mut velocity, mut previous_velocity, collected_resources) in query.iter_mut() {
+    for (entity, transform, mut velocity, mut previous_velocity, collected_resources) in
+        query.iter_mut()
+    {
+        // Check if the ball is outside the screen bounds
+        if transform.translation.y > 1000.0 {
+            commands.entity(entity).despawn_recursive();
+            continue;
+        }
+
         // Check if velocity has changed (can't use Changed<Velocity> since rapier updates it every time)
         if velocity.linvel == previous_velocity.linvel {
             continue;
         }
 
-        println!("Collected resources: {:?}", collected_resources);
+        // println!("Collected resources: {:?}", collected_resources);
 
         // Velocity has changed (collision) so lets check if we need to modify it
         let mut new_vel = velocity.linvel;

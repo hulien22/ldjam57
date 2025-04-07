@@ -3,8 +3,8 @@ use std::time::Duration;
 use bevy::{math::VectorSpace, prelude::*};
 use bevy_rapier2d::prelude::{
     ActiveCollisionTypes, ActiveEvents, Ccd, Collider, ColliderMassProperties, CollisionEvent,
-    ExternalImpulse, Friction, GravityScale, KinematicCharacterController, LockedAxes, Restitution,
-    RigidBody, Velocity,
+    CollisionGroups, ExternalImpulse, Friction, GravityScale, KinematicCharacterController,
+    LockedAxes, Restitution, RigidBody, Velocity,
 };
 use leafwing_input_manager::{input_map, prelude::*};
 use rand::Rng;
@@ -14,6 +14,7 @@ use crate::{
     asset_loading::GameImageAssets,
     ball::{CollectedResources, spawn_ball},
     particles::{BoxParticle, BoxParticlesEvent},
+    physics::{BALL_GROUP, BLOCK_GROUP, PADDLE_GROUP, WALL_GROUP},
 };
 
 pub struct PaddlePlugin;
@@ -55,6 +56,8 @@ pub struct Paddle;
 const PADDLE_WIDTH: f32 = 32.2;
 const PADDLE_HEIGHT: f32 = 5.0;
 
+const PADDLE_MAX_HEIGHT: f32 = 500.0;
+
 fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
     commands
         .spawn((
@@ -78,6 +81,7 @@ fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
                 ActiveCollisionTypes::all(),
                 ActiveEvents::COLLISION_EVENTS,
                 Ccd::enabled(),
+                CollisionGroups::new(PADDLE_GROUP, WALL_GROUP | BALL_GROUP | BLOCK_GROUP),
             ),
             StateScoped(AppState::Game),
             Name::new("Paddle"),
@@ -106,6 +110,7 @@ fn move_paddle(
     mut query: Query<(&ActionState<PaddleAction>, &mut Transform, &mut Velocity), With<Paddle>>,
     time: Res<Time>,
     mut commands: Commands,
+    assets: Res<GameImageAssets>,
 ) {
     let (action_state, mut transform, mut vel) =
         query.get_single_mut().expect("Failed to get paddle entity");
@@ -143,7 +148,7 @@ fn move_paddle(
     }
 
     if action_state.just_pressed(&PaddleAction::Fire) {
-        spawn_ball(commands, transform.clone());
+        spawn_ball(commands, transform.clone(), assets);
     }
 }
 
@@ -162,7 +167,7 @@ fn follow_cam(
         .expect("Need single paddle to follow.");
     camera_transform.translation.y = VectorSpace::lerp(
         camera_transform.translation.y,
-        paddle_transform.translation.y,
+        paddle_transform.translation.y.min(PADDLE_MAX_HEIGHT),
         FOLLOW_SPEED * time.delta_secs(),
     );
 }
