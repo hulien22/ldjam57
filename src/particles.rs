@@ -26,6 +26,7 @@ pub struct BoxParticlesEvent {
     pub target_position: Vec2,
     pub z_index: f32,
     pub color: Color,
+    pub target_color: Color,
     pub size: Vec2,
     pub target_scale: Vec3,
     pub duration: Duration,
@@ -38,6 +39,7 @@ impl BoxParticlesEvent {
             target_position: Vec2::ZERO,
             z_index: 0.0,
             color: Color::WHITE,
+            target_color: Color::srgba(1.0, 1.0, 1.0, 0.0),
             size: Vec2::ONE,
             target_scale: Vec3::ZERO,
             duration: Duration::from_secs(2),
@@ -94,7 +96,7 @@ fn box_particle_observer(trigger: Trigger<BoxParticlesEvent>, mut commands: Comm
         trigger.duration,
         SpriteColorLens {
             start: trigger.color,
-            end: trigger.color.with_alpha(0.0),
+            end: trigger.target_color,
         },
     );
 

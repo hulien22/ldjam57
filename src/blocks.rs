@@ -358,6 +358,7 @@ pub fn block_break(block_type: BlockType, transform: &Transform, commands: &mut 
             target_position: transform.translation.truncate() + Vec2::new(x, y),
             z_index: -5.0,
             color: bloom_color,
+            target_color: bloom_color.with_alpha(0.0),
             size: Vec2::new(BLOCK_SIZE / 4.0, BLOCK_SIZE / 4.0),
             target_scale: Vec3::ONE,
             duration: Duration::from_millis(500),
