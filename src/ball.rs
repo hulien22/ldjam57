@@ -148,7 +148,7 @@ fn override_physics(
             continue;
         }
 
-        println!("Collected resources: {:?}", collected_resources);
+        // println!("Collected resources: {:?}", collected_resources);
 
         // Velocity has changed (collision) so lets check if we need to modify it
         let mut new_vel = velocity.linvel;
