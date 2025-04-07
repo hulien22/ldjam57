@@ -55,7 +55,7 @@ impl ShopStats {
     }
 
     pub fn speed_cost(&self) -> Option<HashMap<BlockType, u32>> {
-        match self.damage_level {
+        match self.speed_level {
             1 => Some(HashMap::from([(BlockType::LightBlue, 10)])),
             2 => Some(HashMap::from([(BlockType::LightBlue, 50)])),
             3 => Some(HashMap::from([(BlockType::LightBlue, 100)])),

@@ -92,7 +92,7 @@ fn spawn_shop(mut commands: Commands, assets: Res<GameImageAssets>) {
             item: ShopItem::Speed,
             upgrade: "Speed Upgrade".to_string(),
         },
-        Transform::from_xyz(-100.0, 100.0, -100.0),
+        Transform::from_xyz(-100.0, 100.0, -50.0),
         Name::new("Speed Upgrade"),
         (
             Collider::cuboid(25.0, 25.0),
@@ -113,7 +113,7 @@ fn spawn_shop(mut commands: Commands, assets: Res<GameImageAssets>) {
             item: ShopItem::Damage,
             upgrade: "Ball Damage Upgrade".to_string(),
         },
-        Transform::from_xyz(-200.0, 100.0, -100.0),
+        Transform::from_xyz(-200.0, 100.0, -50.0),
         Name::new("Ball Upgrade"),
         (
             Collider::cuboid(25.0, 25.0),
