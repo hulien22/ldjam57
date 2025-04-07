@@ -16,6 +16,7 @@ impl Plugin for AssetLoadingPlugin {
             LoadingState::new(AppState::LoadingAssets)
                 .with_dynamic_assets_file::<StandardDynamicAssetCollection>("game.assets.ron")
                 .load_collection::<GameImageAssets>()
+                .load_collection::<AudioAssets>()
                 .load_collection::<UiComponentAssets>()
                 .continue_to_state(AppState::Game)
                 .on_failure_continue_to_state(AppState::BadStateSadEmoji),
@@ -31,6 +32,14 @@ pub struct UiComponentAssets {
     pub shop_item: Handle<HtmlTemplate>,
     #[asset(path = "ui/components/resource.html")]
     pub resource: Handle<HtmlTemplate>,
+}
+
+#[derive(AssetCollection, Resource)]
+pub struct AudioAssets {
+    #[asset(path = "audio/pop.ogg")]
+    pub pop: Handle<bevy_kira_audio::AudioSource>,
+    #[asset(path = "audio/Space1.mp3")]
+    pub music: Handle<bevy_kira_audio::AudioSource>,
 }
 
 #[derive(AssetCollection, Resource)]
@@ -65,6 +74,9 @@ pub struct GameImageAssets {
 
     #[asset(key = "ball")]
     pub ball: Handle<Image>,
+
+    #[asset(key = "shop_background")]
+    pub shop_background: Handle<Image>,
 
     #[asset(key = "damage_icon")]
     pub damage_icon: Handle<Image>,
