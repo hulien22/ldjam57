@@ -55,6 +55,8 @@ pub struct Paddle;
 const PADDLE_WIDTH: f32 = 32.2;
 const PADDLE_HEIGHT: f32 = 5.0;
 
+const PADDLE_MAX_HEIGHT: f32 = 500.0;
+
 fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
     commands
         .spawn((
@@ -163,7 +165,7 @@ fn follow_cam(
         .expect("Need single paddle to follow.");
     camera_transform.translation.y = VectorSpace::lerp(
         camera_transform.translation.y,
-        paddle_transform.translation.y,
+        paddle_transform.translation.y.min(PADDLE_MAX_HEIGHT),
         FOLLOW_SPEED * time.delta_secs(),
     );
 }
