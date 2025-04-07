@@ -34,5 +34,8 @@
     ),
     "background": File (
         path: "textures/background.png"
+    ),
+    "ball": File (
+        path: "textures/ball.png"
     )
 })

@@ -50,4 +50,7 @@ pub struct GameImageAssets {
     pub ufo_top: Handle<Image>,
     #[asset(key = "ufo_bottom")]
     pub ufo_bottom: Handle<Image>,
+
+    #[asset(key = "ball")]
+    pub ball: Handle<Image>,
 }

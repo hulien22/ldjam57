@@ -7,7 +7,10 @@ use bevy_rapier2d::prelude::{
 };
 use rand::Rng;
 
-use crate::{app_state::AppState, blocks::BlockType, particles::BoxParticlesEvent};
+use crate::{
+    app_state::AppState, asset_loading::GameImageAssets, blocks::BlockType,
+    particles::BoxParticlesEvent,
+};
 
 pub struct BallPlugin;
 
@@ -64,11 +67,16 @@ impl CollectedResources {
     }
 }
 
-pub fn spawn_ball(mut commands: Commands, transform: Transform) {
+pub fn spawn_ball(mut commands: Commands, transform: Transform, assets: Res<GameImageAssets>) {
     let mut rng = rand::rng();
     commands.spawn((
         Ball,
-        Sprite::from_color(Color::srgb(0.5, 0.5 as f32, 0.5), Vec2 { x: 10.0, y: 10.0 }),
+        // Sprite::from_color(Color::srgb(0.5, 0.5 as f32, 0.5), Vec2 { x: 10.0, y: 10.0 }),
+        Sprite {
+            image: assets.ball.clone(),
+            custom_size: Some(Vec2::new(10.0, 10.0)),
+            ..Default::default()
+        },
         Transform::from_xyz(transform.translation.x, transform.translation.y - 5.0, 0.0),
         Collider::ball(5.0),
         RigidBody::Dynamic,

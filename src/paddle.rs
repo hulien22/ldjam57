@@ -106,6 +106,7 @@ fn move_paddle(
     mut query: Query<(&ActionState<PaddleAction>, &mut Transform, &mut Velocity), With<Paddle>>,
     time: Res<Time>,
     mut commands: Commands,
+    assets: Res<GameImageAssets>,
 ) {
     let (action_state, mut transform, mut vel) =
         query.get_single_mut().expect("Failed to get paddle entity");
@@ -143,7 +144,7 @@ fn move_paddle(
     }
 
     if action_state.just_pressed(&PaddleAction::Fire) {
-        spawn_ball(commands, transform.clone());
+        spawn_ball(commands, transform.clone(), assets);
     }
 }
 
