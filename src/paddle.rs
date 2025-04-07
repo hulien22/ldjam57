@@ -4,7 +4,7 @@ use bevy::{math::VectorSpace, prelude::*};
 use bevy_rapier2d::prelude::{
     ActiveCollisionTypes, ActiveEvents, Ccd, Collider, ColliderMassProperties, CollisionEvent,
     CollisionGroups, ExternalImpulse, Friction, GravityScale, KinematicCharacterController,
-    LockedAxes, Restitution, RigidBody, Velocity,
+    LockedAxes, Restitution, RigidBody, Sensor, Velocity,
 };
 use leafwing_input_manager::{input_map, prelude::*};
 use rand::Rng;
@@ -15,7 +15,7 @@ use crate::{
     ball::{CollectedResources, spawn_ball},
     blocks::BLOCK_SIZE,
     particles::{BoxParticle, BoxParticlesEvent},
-    physics::{BALL_GROUP, BLOCK_GROUP, PADDLE_GROUP, WALL_GROUP},
+    physics::{BALL_GROUP, BLOCK_GROUP, PADDLE_GROUP, PADDLE_SHOP_GROUP, WALL_GROUP},
     shop::ShopStats,
     statsbar::{UpdateStatsBarBallsEvent, UpdateStatsBarDepthEvent},
 };
@@ -115,6 +115,13 @@ fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
                 color: Color::srgb(PADDLE_BLOOM, PADDLE_BLOOM, PADDLE_BLOOM),
                 ..Default::default()
             });
+            parent.spawn((
+                Collider::ball(1.),
+                ActiveCollisionTypes::all(),
+                ActiveEvents::COLLISION_EVENTS,
+                Sensor,
+                CollisionGroups::new(PADDLE_SHOP_GROUP, PADDLE_SHOP_GROUP),
+            ));
         });
 }
 
@@ -171,7 +178,11 @@ fn move_paddle(
     if action_state.just_pressed(&PaddleAction::Fire) && num_balls.0 > 0 {
         num_balls.0 -= 1;
         commands.trigger(UpdateStatsBarBallsEvent { balls: num_balls.0 });
-        spawn_ball(commands, transform.clone(), assets);
+        spawn_ball(&mut commands, transform.clone(), assets);
+    }
+
+    if action_state.just_pressed(&PaddleAction::Interact) {
+        // todo
     }
 }
 

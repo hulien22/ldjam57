@@ -86,7 +86,7 @@ fn spawn_stats_bar(
                     });
                     parent.spawn((text_bg.clone(),)).with_children(|parent| {
                         parent.spawn((
-                            Text::new("Balls: 0"),
+                            Text::new("Balls: 3"),
                             TextFont { ..default() },
                             TextColor(Color::WHITE),
                             StatsBarText("Balls".to_string()),
@@ -115,6 +115,10 @@ fn spawn_stats_bar(
                 });
             }
         });
+
+    // commands.trigger(UpdateStatsBarResourcesEvent);
+    // commands.trigger(UpdateStatsBarDepthEvent { depth: 0 });
+    // commands.trigger(UpdateStatsBarBallsEvent { balls: 3 });
 }
 
 #[derive(Event, Debug, Default)]

@@ -8,7 +8,6 @@ use crate::{
     ball::CollectedResources,
     blocks::BlockType,
     paddle::{Paddle, PaddleAction},
-    ui::ShopItem,
 };
 
 pub struct ShopPlugin;
@@ -22,6 +21,12 @@ impl Plugin for ShopPlugin {
                 check_for_shop_toggle.run_if(in_state(AppState::Game)),
             );
     }
+}
+
+#[derive(Component, Debug)]
+pub enum ShopItem {
+    Damage,
+    Speed,
 }
 
 #[derive(Resource)]
@@ -122,7 +127,7 @@ pub fn on_shop_item_pressed(
     }
 }
 
-fn try_buy(reqs: &HashMap<BlockType, u32>, owned: &mut HashMap<BlockType, u32>) -> bool {
+pub fn try_buy(reqs: &HashMap<BlockType, u32>, owned: &mut HashMap<BlockType, u32>) -> bool {
     info!("Trying to buy, needs: {:?} has:{:?}", reqs, owned);
     let mut succeeded = true;
     for (block, &count) in reqs {

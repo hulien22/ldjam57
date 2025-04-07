@@ -70,7 +70,7 @@ impl CollectedResources {
     }
 }
 
-pub fn spawn_ball(mut commands: Commands, transform: Transform, assets: Res<GameImageAssets>) {
+pub fn spawn_ball(commands: &mut Commands, transform: Transform, assets: Res<GameImageAssets>) {
     let mut rng = rand::rng();
     commands.spawn((
         Ball,
