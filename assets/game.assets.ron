@@ -8,6 +8,9 @@
     "light_blue": File (
         path: "textures/Light_Blue_Block1.png"
     ),
+    "light_blue_transparent": File (
+        path: "textures/Light_Blue_Block1_transparency.png"
+    ),
     "light_purple": File (
         path: "textures/Light_Purple_Block1.png"
     ),

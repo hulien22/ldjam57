@@ -3,7 +3,10 @@ use asset_loading::AssetLoadingPlugin;
 use ball::BallPlugin;
 use bevy::{
     asset::AssetMetaCheck,
-    core_pipeline::{bloom::Bloom, tonemapping::Tonemapping},
+    core_pipeline::{
+        bloom::{Bloom, BloomPrefilter},
+        tonemapping::Tonemapping,
+    },
     log::{Level, LogPlugin},
     prelude::*,
     render::camera::ScalingMode,
@@ -98,7 +101,18 @@ fn setup_camera(mut commands: Commands) {
         },
         // // Using a tonemapper that desaturates to white is recommended (https://bevyengine.org/examples/2d-rendering/bloom-2d/)
         Tonemapping::TonyMcMapface,
-        Bloom { ..default() },
+        Bloom {
+            intensity: 0.5,
+            low_frequency_boost: 0.7,
+            low_frequency_boost_curvature: 0.95,
+            high_pass_frequency: 1.0,
+            prefilter: BloomPrefilter {
+                threshold: 0.8,
+                threshold_softness: 0.2,
+            },
+            composite_mode: bevy::core_pipeline::bloom::BloomCompositeMode::Additive,
+            ..default()
+        },
         Name::new("Camera"),
         OrthographicProjection {
             scale: 1.0,

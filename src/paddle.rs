@@ -57,6 +57,7 @@ const PADDLE_WIDTH: f32 = 32.2;
 const PADDLE_HEIGHT: f32 = 5.0;
 
 const PADDLE_MAX_HEIGHT: f32 = 500.0;
+const PADDLE_BLOOM: f32 = 1.4;
 
 fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
     commands
@@ -96,13 +97,13 @@ fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
             parent.spawn(Sprite {
                 image: assets.ufo_top.clone(),
                 custom_size: Some(Vec2 { x: 193., y: 60. } * UFO_SCALE),
-                color: Color::srgb(1.5, 1.5, 1.5),
+                color: Color::srgb(PADDLE_BLOOM, PADDLE_BLOOM, PADDLE_BLOOM),
                 ..Default::default()
             });
             parent.spawn(Sprite {
                 image: assets.ufo_bottom.clone(),
                 custom_size: Some(Vec2 { x: 193., y: 60. } * UFO_SCALE),
-                color: Color::srgb(1.5, 1.5, 1.5),
+                color: Color::srgb(PADDLE_BLOOM, PADDLE_BLOOM, PADDLE_BLOOM),
                 ..Default::default()
             });
         });
@@ -180,12 +181,14 @@ fn spawn_particles(
 ) {
     let (transform, velocity, collected_resources) =
         query.get_single_mut().expect("Failed to get paddle entity");
-
+    if velocity.linvel.length_squared() < 10. {
+        return;
+    }
     commands.trigger(BoxParticlesEvent {
         init_position: Vec2::new(transform.translation.x, transform.translation.y),
         target_position: transform.translation.truncate() - velocity.linvel.normalize(),
         z_index: -10.0,
-        color: Color::srgb(0.2, 0.2, 0.2),
+        color: Color::srgb(0.4, 0.2, 0.2),
         size: Vec2::new(10., 10.),
         target_scale: Vec3::ZERO,
         duration: Duration::from_secs(2),

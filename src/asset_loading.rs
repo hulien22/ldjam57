@@ -33,7 +33,7 @@ pub struct GameImageAssets {
     pub blue: Handle<Image>,
     #[asset(key = "dark_blue")]
     pub dark_blue: Handle<Image>,
-    #[asset(key = "light_blue")]
+    #[asset(key = "light_blue_transparent")]
     pub light_blue: Handle<Image>,
     #[asset(key = "purple")]
     pub purple: Handle<Image>,

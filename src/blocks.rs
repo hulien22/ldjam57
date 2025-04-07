@@ -186,6 +186,8 @@ fn on_add_block(
                         x: BLOCK_SIZE,
                         y: BLOCK_SIZE,
                     }),
+                    // color: Color::srgb(1.02, 1.02, 1.02),
+                    // color: Color::srgba(1.5, 1.5, 1.5, 0.3),
                     ..Default::default()
                 },
                 HitPoints(block.0.max_hitpoints()),

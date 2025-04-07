@@ -78,6 +78,7 @@ pub fn spawn_ball(mut commands: Commands, transform: Transform, assets: Res<Game
         Sprite {
             image: assets.ball.clone(),
             custom_size: Some(Vec2::new(10.0, 10.0)),
+            // color: Color::srgb(1.1, 1.1, 1.1),
             ..Default::default()
         },
         Transform::from_xyz(transform.translation.x, transform.translation.y - 5.0, 0.0),
@@ -195,6 +196,14 @@ fn spawn_trail(
                 11..=50 => num_spawns = 2,
                 _ => num_spawns = 3,
             }
+
+            let bloom_color = Color::srgba(
+                block_type.colour().to_srgba().red * 1.1,
+                block_type.colour().to_srgba().green * 1.1,
+                block_type.colour().to_srgba().blue * 1.1,
+                1.0,
+            );
+
             for _ in 0..num_spawns {
                 commands.trigger(BoxParticlesEvent {
                     init_position: transform.translation.truncate()
@@ -204,7 +213,7 @@ fn spawn_trail(
                             rng.random_range(-25.0_f32.to_radians()..25.0_f32.to_radians()),
                         )),
                     z_index: -5.0,
-                    color: block_type.colour(),
+                    color: bloom_color,
                     size: Vec2::new(3., 3.),
                     target_scale: Vec3::ONE,
                     duration: Duration::from_millis(500),
