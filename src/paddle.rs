@@ -96,11 +96,13 @@ fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
             parent.spawn(Sprite {
                 image: assets.ufo_top.clone(),
                 custom_size: Some(Vec2 { x: 193., y: 60. } * UFO_SCALE),
+                color: Color::srgb(1.5, 1.5, 1.5),
                 ..Default::default()
             });
             parent.spawn(Sprite {
                 image: assets.ufo_bottom.clone(),
                 custom_size: Some(Vec2 { x: 193., y: 60. } * UFO_SCALE),
+                color: Color::srgb(1.5, 1.5, 1.5),
                 ..Default::default()
             });
         });
