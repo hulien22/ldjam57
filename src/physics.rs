@@ -8,8 +8,9 @@ use bevy_rapier2d::{
 use crate::{
     app_state::AppState,
     ball::{self, CollectedResources},
-    blocks::{Block, BlockType, HitPoints},
+    blocks::{Block, BlockType, HitPoints, block_break},
     paddle::Paddle,
+    shop::ShopStats,
 };
 use crate::{ball::Ball, blocks::DespawnHack};
 
@@ -36,6 +37,7 @@ fn process_collisions(
     mut ball_query: Query<(Entity, &mut CollectedResources), With<Ball>>,
     mut paddle_query: Query<(Entity, &mut CollectedResources), (With<Paddle>, Without<Ball>)>,
     mut block_query: Query<(Entity, &mut HitPoints, &Transform, &Collider, &Block), Without<Ball>>,
+    shop_stats: Res<ShopStats>,
     mut commands: Commands,
 ) {
     for &collision in reader.read() {
@@ -53,6 +55,7 @@ fn process_collisions(
                         rhs,
                         &mut commands,
                         &mut ball_query,
+                        &shop_stats,
                     );
                 } else if let Ok((entity, mut hitpoints, transform, collider, block)) =
                     block_query.get_mut(rhs)
@@ -66,6 +69,7 @@ fn process_collisions(
                         lhs,
                         &mut commands,
                         &mut ball_query,
+                        &shop_stats,
                     );
                 }
                 // Process the paddle collisions. Use 'else if' to avoid reprocessing any block collisions.
@@ -89,16 +93,19 @@ fn on_block_hit(
     other: Entity,
     commands: &mut Commands,
     ball_query: &mut Query<(Entity, &mut CollectedResources), With<Ball>>,
+    shop_stats: &Res<ShopStats>,
 ) {
     // skip if we aren't hitting a ball
     if let Ok((_, mut collected_resources)) = ball_query.get_mut(other) {
-        match hitpoints.damage(1) {
+        match hitpoints.damage(shop_stats.damage()) {
             Ok(_) => {}
             Err(_) => {
                 commands.entity(entity).insert(DespawnHack);
 
                 // Update CollectedResources for the corresponding ball
                 collected_resources.add(block.0);
+
+                block_break(block.0, transform, commands);
             }
         }
     }

@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::{Collider, CollisionGroups, Friction, Restitution, RigidBody};
 use noise::{Fbm, MultiFractal, NoiseFn, Perlin, RidgedMulti};
@@ -6,6 +8,7 @@ use crate::{
     app_state::AppState,
     asset_loading::GameImageAssets,
     ball::Ball,
+    particles::BoxParticlesEvent,
     physics::{BALL_GROUP, BLOCK_GROUP, PADDLE_GROUP, WALL_GROUP},
 };
 
@@ -14,7 +17,6 @@ pub struct BlocksPlugin;
 impl Plugin for BlocksPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(AppState::Game), spawn_blocks)
-            .add_systems(OnEnter(AppState::Game), spawn_background)
             .add_systems(
                 FixedUpdate,
                 check_for_new_block_depths.run_if(in_state(AppState::Game)),
@@ -24,7 +26,7 @@ impl Plugin for BlocksPlugin {
     }
 }
 
-pub const WALL_WIDTH: f32 = 50.0;
+pub const WALL_WIDTH: f32 = 10.0;
 pub const BLOCK_SIZE: f32 = 30.0;
 pub const BLOCK_COUNT_WIDTH: usize = 40;
 pub const BLOCK_GAP_SIZE: f32 = 0.0;
@@ -57,34 +59,34 @@ fn spawn_blocks(mut commands: Commands) {
     ));
 
     // UI walls
-    commands
-        .spawn(Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            justify_content: JustifyContent::SpaceBetween,
-            ..Default::default()
-        })
-        .with_children(|parent| {
-            // left vertical fill (border)
-            parent.spawn((
-                Node {
-                    width: Val::Px(WALL_WIDTH),
-                    // border: UiRect::all(Val::Px(2.)),
-                    ..default()
-                },
-                BackgroundColor(Color::srgb(0., 0., 0.)),
-            ));
-            // right vertical fill (border)
-            parent.spawn((
-                Node {
-                    width: Val::Px(WALL_WIDTH),
-                    // border: UiRect::all(Val::Px(2.)),
-                    right: Val::Percent(0.0),
-                    ..default()
-                },
-                BackgroundColor(Color::srgb(0., 0., 0.)),
-            ));
-        });
+    // commands
+    //     .spawn(Node {
+    //         width: Val::Percent(100.0),
+    //         height: Val::Percent(100.0),
+    //         justify_content: JustifyContent::SpaceBetween,
+    //         ..Default::default()
+    //     })
+    //     .with_children(|parent| {
+    //         // left vertical fill (border)
+    //         parent.spawn((
+    //             Node {
+    //                 width: Val::Px(WALL_WIDTH),
+    //                 // border: UiRect::all(Val::Px(2.)),
+    //                 ..default()
+    //             },
+    //             BackgroundColor(Color::srgb(0., 0., 0.)),
+    //         ));
+    //         // right vertical fill (border)
+    //         parent.spawn((
+    //             Node {
+    //                 width: Val::Px(WALL_WIDTH),
+    //                 // border: UiRect::all(Val::Px(2.)),
+    //                 right: Val::Percent(0.0),
+    //                 ..default()
+    //             },
+    //             BackgroundColor(Color::srgb(0., 0., 0.)),
+    //         ));
+    //     });
 }
 
 fn spawn_block_at(j: usize, i: usize, commands: &mut Commands) {
@@ -186,6 +188,8 @@ fn on_add_block(
                         x: BLOCK_SIZE,
                         y: BLOCK_SIZE,
                     }),
+                    // color: Color::srgb(1.02, 1.02, 1.02),
+                    // color: Color::srgba(1.5, 1.5, 1.5, 0.3),
                     ..Default::default()
                 },
                 HitPoints(block.0.max_hitpoints()),
@@ -299,7 +303,6 @@ fn pick_block_type(position: Vec2) -> BlockType {
         .set_frequency(0.04)
         .get([position.x as f64, position.y as f64]);
 
-    // info!("{} {}", a, b);
     if g > 0.65 {
         BlockType::Blue
     } else if b > 0.65 {
@@ -333,30 +336,30 @@ fn pick_base_block_type(position: Vec2) -> BlockType {
     }
 }
 
-fn spawn_background(
-    mut commands: Commands,
-    assets: Res<GameImageAssets>,
-    camera_query: Query<(Entity, &Camera, &GlobalTransform)>,
-) {
-    let camera = camera_query
-        .get_single()
-        .expect("Need single camera to spawn background.");
-    let background = commands
-        .spawn((
-            Sprite {
-                image: assets.background.clone(),
-                custom_size: camera.1.logical_viewport_size(),
-                ..Default::default()
-            },
-            Transform::from_translation(Vec3 {
-                x: 0.0,
-                y: 0.0,
-                z: -100.0,
-            }),
-            Name::new("Background"),
-        ))
-        .id();
-    if let Some(mut entity_commands) = commands.get_entity(camera.0) {
-        entity_commands.add_child(background);
+pub fn block_break(block_type: BlockType, transform: &Transform, commands: &mut Commands) {
+    const NUM_PARTICLES: usize = 10;
+    let mut rng = rand::rng();
+    let bloom_color = Color::srgba(
+        block_type.colour().to_srgba().red * 1.1,
+        block_type.colour().to_srgba().green * 1.1,
+        block_type.colour().to_srgba().blue * 1.1,
+        1.0,
+    );
+
+    for i in 0..NUM_PARTICLES {
+        let angle = i as f32 * (std::f32::consts::PI * 2.0 / NUM_PARTICLES as f32);
+        let x = angle.cos() * BLOCK_SIZE / 2.0;
+        let y = angle.sin() * BLOCK_SIZE / 2.0;
+
+        commands.trigger(BoxParticlesEvent {
+            init_position: transform.translation.truncate(),
+            // + Vec2::new(rng.random_range(-5.0..5.0), rng.random_range(-5.0..5.0)),
+            target_position: transform.translation.truncate() + Vec2::new(x, y),
+            z_index: -5.0,
+            color: bloom_color,
+            size: Vec2::new(BLOCK_SIZE / 4.0, BLOCK_SIZE / 4.0),
+            target_scale: Vec3::ONE,
+            duration: Duration::from_millis(500),
+        });
     }
 }

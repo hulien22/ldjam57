@@ -1,14 +1,18 @@
 use app_state::AppState;
-use asset_loading::AssetLoadingPlugin;
+use asset_loading::{AssetLoadingPlugin, GameImageAssets};
+use audio::InternalAudioPlugin;
 use ball::BallPlugin;
 use bevy::{
     asset::AssetMetaCheck,
-    core_pipeline::{bloom::Bloom, tonemapping::Tonemapping},
+    core_pipeline::{
+        bloom::{Bloom, BloomPrefilter},
+        tonemapping::Tonemapping,
+    },
     log::{Level, LogPlugin},
     prelude::*,
     render::camera::ScalingMode,
     text::FontSmoothing,
-    window::WindowResolution,
+    window::{WindowResized, WindowResolution},
 };
 use bevy_dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
@@ -17,20 +21,26 @@ use blocks::{BLOCK_GROUP_OFFSET, BlocksPlugin, WALL_WIDTH};
 use paddle::PaddlePlugin;
 use particles::ParticlesPlugin;
 use physics::PhysicsPlugin;
+use shop::ShopPlugin;
+use ui::UiPlugin;
 
 mod app_state;
 mod asset_loading;
+mod audio;
 mod ball;
 mod blocks;
 mod paddle;
 mod particles;
 mod physics;
+mod shop;
+mod ui;
 
 fn main() {
     App::new()
         .add_plugins(
             DefaultPlugins
                 .set(AssetPlugin {
+                    watch_for_changes_override: Some(true),
                     // Fix for wasm, skip meta checks
                     meta_check: AssetMetaCheck::Never,
                     ..default()
@@ -83,7 +93,12 @@ fn main() {
         .add_plugins(PaddlePlugin)
         .add_plugins(BallPlugin)
         .add_plugins(PhysicsPlugin)
+        .add_plugins(UiPlugin)
+        .add_plugins(ShopPlugin)
+        .add_plugins(InternalAudioPlugin)
         .add_systems(Startup, setup_camera)
+        .add_systems(OnEnter(AppState::Game), spawn_background)
+        .add_systems(Update, on_resize_system)
         .init_state::<AppState>()
         .enable_state_scoped_entities::<AppState>()
         .run();
@@ -98,7 +113,18 @@ fn setup_camera(mut commands: Commands) {
         },
         // // Using a tonemapper that desaturates to white is recommended (https://bevyengine.org/examples/2d-rendering/bloom-2d/)
         Tonemapping::TonyMcMapface,
-        Bloom { ..default() },
+        Bloom {
+            intensity: 0.5,
+            low_frequency_boost: 0.7,
+            low_frequency_boost_curvature: 0.95,
+            high_pass_frequency: 1.0,
+            prefilter: BloomPrefilter {
+                threshold: 0.8,
+                threshold_softness: 0.2,
+            },
+            composite_mode: bevy::core_pipeline::bloom::BloomCompositeMode::Additive,
+            ..default()
+        },
         Name::new("Camera"),
         OrthographicProjection {
             scale: 1.0,
@@ -108,4 +134,50 @@ fn setup_camera(mut commands: Commands) {
             ..OrthographicProjection::default_2d()
         },
     ));
+}
+
+#[derive(Component)]
+struct Background;
+
+fn spawn_background(
+    mut commands: Commands,
+    assets: Res<GameImageAssets>,
+    camera_query: Query<(Entity, &Camera, &GlobalTransform)>,
+) {
+    let camera = camera_query
+        .get_single()
+        .expect("Need single camera to spawn background.");
+    let background = commands
+        .spawn((
+            Background,
+            Sprite {
+                image: assets.background.clone(),
+                custom_size: camera.1.logical_viewport_size(),
+                ..Default::default()
+            },
+            Transform::from_translation(Vec3 {
+                x: 0.0,
+                y: 0.0,
+                z: -100.0,
+            }),
+            Name::new("Background"),
+        ))
+        .id();
+    if let Some(mut entity_commands) = commands.get_entity(camera.0) {
+        entity_commands.add_child(background);
+    }
+}
+
+fn on_resize_system(
+    mut bg_query: Query<&mut Sprite, With<Background>>,
+    camera_query: Query<
+        (Entity, &OrthographicProjection),
+        (With<Camera>, Changed<OrthographicProjection>),
+    >,
+) {
+    for (_, orthoproj) in camera_query.iter() {
+        for mut sprite in bg_query.iter_mut() {
+            sprite.custom_size = Some(Vec2::new(orthoproj.area.width(), orthoproj.area.height()));
+        }
+    }
 }

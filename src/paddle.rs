@@ -15,15 +15,17 @@ use crate::{
     ball::{CollectedResources, spawn_ball},
     particles::{BoxParticle, BoxParticlesEvent},
     physics::{BALL_GROUP, BLOCK_GROUP, PADDLE_GROUP, WALL_GROUP},
+    shop::ShopStats,
 };
 
 pub struct PaddlePlugin;
 
 #[derive(Actionlike, PartialEq, Eq, Hash, Clone, Copy, Debug, Reflect)]
-enum PaddleAction {
+pub enum PaddleAction {
     #[actionlike(DualAxis)]
     Move,
     Fire,
+    Interact,
 }
 
 impl PaddleAction {
@@ -34,6 +36,7 @@ impl PaddleAction {
         input_map.insert_dual_axis(Self::Move, VirtualDPad::arrow_keys());
         input_map.insert_dual_axis(Self::Move, VirtualDPad::wasd());
         input_map.insert(Self::Fire, KeyCode::Space);
+        input_map.insert(Self::Interact, KeyCode::KeyE);
 
         input_map
     }
@@ -57,6 +60,7 @@ const PADDLE_WIDTH: f32 = 32.2;
 const PADDLE_HEIGHT: f32 = 5.0;
 
 const PADDLE_MAX_HEIGHT: f32 = 500.0;
+const PADDLE_BLOOM: f32 = 1.4;
 
 fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
     commands
@@ -96,13 +100,13 @@ fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
             parent.spawn(Sprite {
                 image: assets.ufo_top.clone(),
                 custom_size: Some(Vec2 { x: 193., y: 60. } * UFO_SCALE),
-                color: Color::srgb(1.5, 1.5, 1.5),
+                color: Color::srgb(PADDLE_BLOOM, PADDLE_BLOOM, PADDLE_BLOOM),
                 ..Default::default()
             });
             parent.spawn(Sprite {
                 image: assets.ufo_bottom.clone(),
                 custom_size: Some(Vec2 { x: 193., y: 60. } * UFO_SCALE),
-                color: Color::srgb(1.5, 1.5, 1.5),
+                color: Color::srgb(PADDLE_BLOOM, PADDLE_BLOOM, PADDLE_BLOOM),
                 ..Default::default()
             });
         });
@@ -113,6 +117,7 @@ fn move_paddle(
     time: Res<Time>,
     mut commands: Commands,
     assets: Res<GameImageAssets>,
+    stats: Res<ShopStats>,
 ) {
     let (action_state, mut transform, mut vel) =
         query.get_single_mut().expect("Failed to get paddle entity");
@@ -122,7 +127,7 @@ fn move_paddle(
     let mut lin_damping = time.delta_secs() * 10.0;
     if action_state.axis_pair(&PaddleAction::Move) != Vec2::ZERO {
         // controller.translation = Some(action_state.axis_pair(&PaddleAction::Move) * 5.0);
-        target_lin_vel = action_state.clamped_axis_pair(&PaddleAction::Move) * 100.0;
+        target_lin_vel = action_state.clamped_axis_pair(&PaddleAction::Move) * stats.speed();
         lin_damping *= 2.0;
     }
     vel.linvel = vel.linvel.lerp(target_lin_vel, lin_damping);
@@ -180,12 +185,14 @@ fn spawn_particles(
 ) {
     let (transform, velocity, collected_resources) =
         query.get_single_mut().expect("Failed to get paddle entity");
-
+    if velocity.linvel.length_squared() < 10. {
+        return;
+    }
     commands.trigger(BoxParticlesEvent {
         init_position: Vec2::new(transform.translation.x, transform.translation.y),
         target_position: transform.translation.truncate() - velocity.linvel.normalize(),
         z_index: -10.0,
-        color: Color::srgb(0.2, 0.2, 0.2),
+        color: Color::srgb(0.4, 0.2, 0.2),
         size: Vec2::new(10., 10.),
         target_scale: Vec3::ZERO,
         duration: Duration::from_secs(2),
