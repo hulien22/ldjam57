@@ -76,17 +76,17 @@ fn main() {
                     ..default()
                 }),
         )
-        .add_plugins(FpsOverlayPlugin {
-            config: FpsOverlayConfig {
-                text_config: TextFont {
-                    font_size: 12.0,
-                    font: default(),
-                    font_smoothing: FontSmoothing::default(),
-                },
-                text_color: Color::srgb(0.0, 1.0, 0.0),
-                enabled: true,
-            },
-        })
+        // .add_plugins(FpsOverlayPlugin {
+        //     config: FpsOverlayConfig {
+        //         text_config: TextFont {
+        //             font_size: 12.0,
+        //             font: default(),
+        //             font_smoothing: FontSmoothing::default(),
+        //         },
+        //         text_color: Color::srgb(0.0, 1.0, 0.0),
+        //         enabled: true,
+        //     },
+        // })
         .add_plugins(WorldInspectorPlugin::new())
         .add_plugins(AssetLoadingPlugin)
         .add_plugins(TweeningPlugin)
@@ -224,6 +224,7 @@ fn on_resize_system(
         (Entity, &OrthographicProjection),
         (With<Camera>, Changed<OrthographicProjection>),
     >,
+    mut ui_scale: ResMut<UiScale>,
 ) {
     for (_, orthoproj) in camera_query.iter() {
         for mut sprite in bg_query.iter_mut() {
@@ -244,5 +245,10 @@ fn on_resize_system(
                 transform.translation.y = orthoproj.area.height() / 2.0 - STATS_BAR_HEIGHT / 2.0;
             }
         }
+
+        // calc change in vert size
+        let scale = 1280. / orthoproj.area.height();
+        // set ui scale
+        ui_scale.0 = scale;
     }
 }

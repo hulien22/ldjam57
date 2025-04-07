@@ -1,6 +1,12 @@
 use bevy::prelude::*;
+use strum::IntoEnumIterator;
 
-use crate::{BackgroundHoriWall, app_state::AppState, asset_loading::GameImageAssets};
+use crate::{
+    BackgroundHoriWall,
+    app_state::AppState,
+    asset_loading::GameImageAssets,
+    blocks::{BlockType, WALL_WIDTH},
+};
 
 pub struct StatsBarPlugin;
 
@@ -8,7 +14,9 @@ pub struct StatsBarPlugin;
 pub struct StatsBar;
 
 #[derive(Component)]
-pub struct StatsBarText;
+pub struct StatsBarText(pub String);
+#[derive(Component)]
+pub struct StatsBarResource(pub BlockType);
 
 #[derive(Component)]
 pub struct StatsBarBackground;
@@ -27,28 +35,82 @@ fn spawn_stats_bar(
     assets: Res<GameImageAssets>,
     camera_query: Query<(Entity, &Camera, &GlobalTransform, &OrthographicProjection)>,
 ) {
-    let (cam_entity, camera, transform, orthoproj) =
-        camera_query.get_single().expect("Need single camera.");
-
-    let background = commands
+    // add ui
+    commands
         .spawn((
-            BackgroundHoriWall,
-            Sprite::from_color(
-                Color::srgb(33.0 / 256.0, 33.0 / 256.0, 33.0 / 256.0),
-                Vec2::new(orthoproj.area.width(), STATS_BAR_HEIGHT),
-            ),
-            Transform::from_translation(Vec3 {
-                x: 0.0,
-                y: orthoproj.area.height() / 2.0 - STATS_BAR_HEIGHT / 2.0,
-                z: 100.0,
-            }),
-            Name::new("StatsBackground"),
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Px(STATS_BAR_HEIGHT),
+                flex_direction: FlexDirection::Row,
+                align_items: AlignItems::Stretch,
+                justify_content: JustifyContent::SpaceBetween,
+                ..Default::default()
+            },
+            Name::new("Stats Bar"),
+            // BackgroundColor(Color::srgba(33.0 / 256.0, 33.0 / 256.0, 33.0 / 256.0, 0.5)),
         ))
-        .id();
+        .with_children(|parent| {
+            let text_bg = (Node {
+                margin: UiRect {
+                    left: Val::Px(10.),
+                    right: Val::Px(10.0),
+                    top: Val::Auto,
+                    bottom: Val::Auto,
+                },
+                // padding / margin
+                ..default()
+            },);
+            // left stuff has a text field for depth and ball count
+            parent
+                .spawn((
+                    Node {
+                        flex_direction: FlexDirection::Row,
+                        align_items: AlignItems::Center,
+                        justify_content: JustifyContent::FlexStart,
+                        ..default()
+                    },
+                    BackgroundColor(Color::srgba(33.0 / 256.0, 33.0 / 256.0, 33.0 / 256.0, 1.0)),
+                ))
+                .with_children(|parent| {
+                    parent.spawn((text_bg.clone(),)).with_children(|parent| {
+                        parent.spawn((
+                            Text::new("Depth: 0"),
+                            TextFont { ..default() },
+                            TextColor(Color::WHITE),
+                            StatsBarText("Depth".to_string()),
+                        ));
+                    });
+                    parent.spawn((text_bg.clone(),)).with_children(|parent| {
+                        parent.spawn((
+                            Text::new("Balls: 0"),
+                            TextFont { ..default() },
+                            TextColor(Color::WHITE),
+                            StatsBarText("Balls".to_string()),
+                        ));
+                    });
+                });
 
-    if let Some(mut entity_commands) = commands.get_entity(cam_entity) {
-        entity_commands.add_child(background);
-    }
+            // right stuff is for CollectedResources
+            let mut right = parent.spawn((
+                Node {
+                    flex_direction: FlexDirection::Row,
+                    align_items: AlignItems::Center,
+                    justify_content: JustifyContent::FlexStart,
+                    ..default()
+                },
+                BackgroundColor(Color::srgba(33.0 / 256.0, 33.0 / 256.0, 33.0 / 256.0, 1.0)),
+            ));
+            for block_type in BlockType::iter() {
+                right.with_children(|parent| {
+                    parent.spawn((
+                        Text::new(format!(" 0 ")),
+                        TextFont { ..default() },
+                        TextColor(block_type.colour()),
+                        StatsBarResource(block_type),
+                    ));
+                });
+            }
+        });
 }
 
 fn update_stats_bar(

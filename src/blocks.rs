@@ -3,6 +3,7 @@ use std::time::Duration;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::{Collider, CollisionGroups, Friction, Restitution, RigidBody};
 use noise::{Fbm, MultiFractal, NoiseFn, Perlin, RidgedMulti};
+use strum_macros::EnumIter;
 
 use crate::{
     app_state::AppState,
@@ -221,7 +222,7 @@ impl HitPoints {
     }
 }
 
-#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Hash, Eq, PartialEq, EnumIter)]
 pub enum BlockType {
     Blue,
     LightBlue,
