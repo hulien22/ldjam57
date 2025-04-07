@@ -90,13 +90,14 @@ fn on_block_hit(
     commands: &mut Commands,
     ball_query: &mut Query<(Entity, &mut CollectedResources), With<Ball>>,
 ) {
-    match hitpoints.damage(1) {
-        Ok(_) => {}
-        Err(_) => {
-            commands.entity(entity).insert(DespawnHack);
+    // skip if we aren't hitting a ball
+    if let Ok((_, mut collected_resources)) = ball_query.get_mut(other) {
+        match hitpoints.damage(1) {
+            Ok(_) => {}
+            Err(_) => {
+                commands.entity(entity).insert(DespawnHack);
 
-            // Update CollectedResources for the corresponding ball
-            if let Ok((_, mut collected_resources)) = ball_query.get_mut(other) {
+                // Update CollectedResources for the corresponding ball
                 collected_resources.add(block.0);
             }
         }
