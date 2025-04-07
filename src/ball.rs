@@ -19,7 +19,7 @@ impl Plugin for BallPlugin {
         app.add_systems(
             // TODO verify if we need to do any ordering here..
             FixedUpdate,
-            process_collisions.run_if(in_state(AppState::Game)),
+            override_physics.run_if(in_state(AppState::Game)),
         )
         .add_systems(Update, spawn_trail.run_if(in_state(AppState::Game)));
     }
@@ -106,26 +106,39 @@ pub fn spawn_ball(mut commands: Commands, transform: Transform, assets: Res<Game
         Velocity::linear(
             transform
                 .rotation
-                .mul_vec3(Vec3::new(rng.random_range(-10.0..10.0), -100.0, 0.0))
-                .truncate(),
+                .mul_vec3(Vec3::new(0.0, -100.0, 0.0))
+                .truncate()
+                .rotate(Vec2::from_angle(
+                    rng.random_range(-5.0_f32.to_radians()..5.0_f32.to_radians()),
+                )),
         ),
         PreviousVelocity::zero(),
         CollectedResources::new(),
     ));
 }
 
-fn process_collisions(
+fn override_physics(
     mut query: Query<
         (
             Entity,
+            &Transform,
             &mut Velocity,
             &mut PreviousVelocity,
             &CollectedResources,
         ),
         With<Ball>,
     >,
+    mut commands: Commands,
 ) {
-    for (entity, mut velocity, mut previous_velocity, collected_resources) in query.iter_mut() {
+    for (entity, transform, mut velocity, mut previous_velocity, collected_resources) in
+        query.iter_mut()
+    {
+        // Check if the ball is outside the screen bounds
+        if transform.translation.y > 1000.0 {
+            commands.entity(entity).despawn_recursive();
+            continue;
+        }
+
         // Check if velocity has changed (can't use Changed<Velocity> since rapier updates it every time)
         if velocity.linvel == previous_velocity.linvel {
             continue;
