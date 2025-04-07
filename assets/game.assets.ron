@@ -59,4 +59,22 @@
     "refresh_icon": File(
         path: "textures/ICON_refresh.png"
     ),
+    "title": File(
+        path: "textures/temp_title.png"
+    ),
+    "wasd": File(
+        path: "textures/ICON_WASD.png"
+    ),
+    "arrows": File(
+        path: "textures/ICON_arrows.png"
+    ),
+    "move": File(
+        path: "textures/ICON_move.png"
+    ),
+    "space": File(
+        path: "textures/ICON_space.png"
+    ),
+    "shoot_ball": File(
+        path: "textures/ICON_shoot_ball.png"
+    ),
 })

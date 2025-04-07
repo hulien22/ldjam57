@@ -88,4 +88,17 @@ pub struct GameImageAssets {
     pub paddle_size_icon: Handle<Image>,
     #[asset(key = "refresh_icon")]
     pub refresh_icon: Handle<Image>,
+
+    #[asset(key = "title")]
+    pub title: Handle<Image>,
+    #[asset(key = "wasd")]
+    pub wasd: Handle<Image>,
+    #[asset(key = "arrows")]
+    pub arrows: Handle<Image>,
+    #[asset(key = "move")]
+    pub movetext: Handle<Image>,
+    #[asset(key = "space")]
+    pub space: Handle<Image>,
+    #[asset(key = "shoot_ball")]
+    pub shootballtext: Handle<Image>,
 }
