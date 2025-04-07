@@ -21,6 +21,7 @@ use paddle::PaddlePlugin;
 use particles::ParticlesPlugin;
 use physics::PhysicsPlugin;
 use shop::ShopPlugin;
+use statsbar::{STATS_BAR_HEIGHT, StatsBarPlugin};
 use ui::UiPlugin;
 
 mod app_state;
@@ -31,6 +32,7 @@ mod paddle;
 mod particles;
 mod physics;
 mod shop;
+mod statsbar;
 mod ui;
 
 fn main() {
@@ -92,6 +94,7 @@ fn main() {
         .add_plugins(BallPlugin)
         .add_plugins(PhysicsPlugin)
         .add_plugins(UiPlugin)
+        .add_plugins(StatsBarPlugin)
         .add_plugins(ShopPlugin)
         .add_systems(Startup, setup_camera)
         .add_systems(OnEnter(AppState::Game), spawn_background)
@@ -136,7 +139,9 @@ fn setup_camera(mut commands: Commands) {
 #[derive(Component)]
 struct Background;
 #[derive(Component)]
-struct BackgroundWall;
+pub struct BackgroundVertWall;
+#[derive(Component)]
+pub struct BackgroundHoriWall;
 
 fn spawn_background(
     mut commands: Commands,
@@ -164,7 +169,7 @@ fn spawn_background(
         .id();
     let wall1 = commands
         .spawn((
-            BackgroundWall,
+            BackgroundVertWall,
             Sprite::from_color(
                 Color::srgb(33.0 / 256.0, 33.0 / 256.0, 33.0 / 256.0),
                 Vec2::new(WALL_WIDTH, 720.0),
@@ -179,7 +184,7 @@ fn spawn_background(
         .id();
     let wall2 = commands
         .spawn((
-            BackgroundWall,
+            BackgroundVertWall,
             Sprite::from_color(
                 Color::srgb(33.0 / 256.0, 33.0 / 256.0, 33.0 / 256.0),
                 Vec2::new(WALL_WIDTH, 720.0),
@@ -203,7 +208,15 @@ fn spawn_background(
 
 fn on_resize_system(
     mut bg_query: Query<&mut Sprite, With<Background>>,
-    mut bgwall_query: Query<&mut Sprite, (With<BackgroundWall>, Without<Background>)>,
+    mut bgvertwall_query: Query<&mut Sprite, (With<BackgroundVertWall>, Without<Background>)>,
+    mut bghoriwall_query: Query<
+        (&mut Sprite, &mut Transform),
+        (
+            With<BackgroundHoriWall>,
+            Without<Background>,
+            Without<BackgroundVertWall>,
+        ),
+    >,
     camera_query: Query<
         (Entity, &OrthographicProjection),
         (With<Camera>, Changed<OrthographicProjection>),
@@ -213,8 +226,20 @@ fn on_resize_system(
         for mut sprite in bg_query.iter_mut() {
             sprite.custom_size = Some(Vec2::new(orthoproj.area.width(), orthoproj.area.height()));
         }
-        for mut sprite in bgwall_query.iter_mut() {
-            sprite.custom_size = Some(Vec2::new(WALL_WIDTH, orthoproj.area.height()));
+        for mut sprite in bgvertwall_query.iter_mut() {
+            // sprite.custom_size = Some(Vec2::new(WALL_WIDTH, orthoproj.area.height()));
+
+            // get previous size
+            if let Some(size) = sprite.custom_size {
+                sprite.custom_size = Some(Vec2::new(size.x, orthoproj.area.height()));
+            }
+        }
+        for (mut sprite, mut transform) in bghoriwall_query.iter_mut() {
+            // get previous size
+            if let Some(size) = sprite.custom_size {
+                sprite.custom_size = Some(Vec2::new(orthoproj.area.width(), size.y));
+                transform.translation.y = orthoproj.area.height() / 2.0 - STATS_BAR_HEIGHT / 2.0;
+            }
         }
     }
 }
