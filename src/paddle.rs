@@ -13,9 +13,11 @@ use crate::{
     app_state::AppState,
     asset_loading::GameImageAssets,
     ball::{CollectedResources, spawn_ball},
+    blocks::BLOCK_SIZE,
     particles::{BoxParticle, BoxParticlesEvent},
     physics::{BALL_GROUP, BLOCK_GROUP, PADDLE_GROUP, WALL_GROUP},
     shop::ShopStats,
+    statsbar::{UpdateStatsBarBallsEvent, UpdateStatsBarDepthEvent},
 };
 
 pub struct PaddlePlugin;
@@ -55,6 +57,9 @@ impl Plugin for PaddlePlugin {
 #[derive(Component)]
 pub struct Paddle;
 
+#[derive(Component)]
+pub struct NumBalls(pub u32);
+
 // TODO height won't change, but width will so need to move to a resource
 const PADDLE_WIDTH: f32 = 32.2;
 const PADDLE_HEIGHT: f32 = 5.0;
@@ -77,23 +82,24 @@ fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
             Collider::cuboid(PADDLE_WIDTH / 2., PADDLE_HEIGHT / 2.),
             RigidBody::Dynamic,
             // KinematicCharacterController::default(),
-            GravityScale(0.0),
-            ColliderMassProperties::Density(10.0),
-            Friction::coefficient(1.0),
-            Restitution::coefficient(2.0),
             (
+                GravityScale(0.0),
+                ColliderMassProperties::Density(10.0),
+                Friction::coefficient(1.0),
+                Restitution::coefficient(2.0),
                 ActiveCollisionTypes::all(),
                 ActiveEvents::COLLISION_EVENTS,
                 Ccd::enabled(),
                 CollisionGroups::new(PADDLE_GROUP, WALL_GROUP | BALL_GROUP | BLOCK_GROUP),
+                Velocity::default(),
             ),
             StateScoped(AppState::Game),
             Name::new("Paddle"),
             InputManagerBundle::with_map(PaddleAction::default_bindings()),
             // LockedAxes::ROTATION_LOCKED_Z,
-            Velocity::default(),
             InheritedVisibility::default(),
             CollectedResources::new(),
+            NumBalls(3),
         ))
         .with_children(|parent| {
             const UFO_SCALE: f32 = PADDLE_HEIGHT / 60. * 2.;
@@ -113,13 +119,21 @@ fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
 }
 
 fn move_paddle(
-    mut query: Query<(&ActionState<PaddleAction>, &mut Transform, &mut Velocity), With<Paddle>>,
+    mut query: Query<
+        (
+            &ActionState<PaddleAction>,
+            &mut Transform,
+            &mut Velocity,
+            &mut NumBalls,
+        ),
+        With<Paddle>,
+    >,
     time: Res<Time>,
     mut commands: Commands,
     assets: Res<GameImageAssets>,
     stats: Res<ShopStats>,
 ) {
-    let (action_state, mut transform, mut vel) =
+    let (action_state, mut transform, mut vel, mut num_balls) =
         query.get_single_mut().expect("Failed to get paddle entity");
 
     // lerp to target velocity
@@ -154,7 +168,9 @@ fn move_paddle(
         vel.angvel = FloatExt::lerp(vel.angvel, target_ang_vel, ang_damping);
     }
 
-    if action_state.just_pressed(&PaddleAction::Fire) {
+    if action_state.just_pressed(&PaddleAction::Fire) && num_balls.0 > 0 {
+        num_balls.0 -= 1;
+        commands.trigger(UpdateStatsBarBallsEvent { balls: num_balls.0 });
         spawn_ball(commands, transform.clone(), assets);
     }
 }
@@ -196,5 +212,10 @@ fn spawn_particles(
         size: Vec2::new(10., 10.),
         target_scale: Vec3::ZERO,
         duration: Duration::from_secs(2),
+    });
+
+    // also update stats depth
+    commands.trigger(UpdateStatsBarDepthEvent {
+        depth: ((transform.translation.y - BLOCK_SIZE) / BLOCK_SIZE).floor() as i32,
     });
 }

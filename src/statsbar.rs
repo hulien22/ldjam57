@@ -5,7 +5,9 @@ use crate::{
     BackgroundHoriWall,
     app_state::AppState,
     asset_loading::GameImageAssets,
+    ball::CollectedResources,
     blocks::{BlockType, WALL_WIDTH},
+    paddle::Paddle,
 };
 
 pub struct StatsBarPlugin;
@@ -24,7 +26,9 @@ pub struct StatsBarBackground;
 impl Plugin for StatsBarPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(AppState::Game), spawn_stats_bar)
-            .add_systems(Update, update_stats_bar.run_if(in_state(AppState::Game)));
+            .add_observer(update_stats_bar_resources)
+            .add_observer(update_stats_bar_depth)
+            .add_observer(update_stats_bar_balls);
     }
 }
 
@@ -103,7 +107,7 @@ fn spawn_stats_bar(
             for block_type in BlockType::iter() {
                 right.with_children(|parent| {
                     parent.spawn((
-                        Text::new(format!(" 0 ")),
+                        Text::new(format!("")),
                         TextFont { ..default() },
                         TextColor(block_type.colour()),
                         StatsBarResource(block_type),
@@ -113,16 +117,57 @@ fn spawn_stats_bar(
         });
 }
 
-fn update_stats_bar(
-    mut commands: Commands,
-    mut stats_bar_query: Query<(&StatsBar, &mut Transform)>,
+#[derive(Event, Debug, Default)]
+pub struct UpdateStatsBarResourcesEvent;
+
+fn update_stats_bar_resources(
+    trigger: Trigger<UpdateStatsBarResourcesEvent>,
+    mut query: Query<(&StatsBarResource, &mut Text)>,
+    mut paddle_query: Query<(Entity, &CollectedResources), With<Paddle>>,
 ) {
-    // let camera = camera_query
-    //     .get_single()
-    //     .expect("Need single camera to spawn background.");
-    // for (stats_bar, mut transform) in stats_bar_query.iter_mut() {
-    //     // Update the position of the stats bar based on the camera position
-    //     transform.translation.x = camera.2.translation.x;
-    //     transform.translation.y = camera.2.translation.y - 100.0; // Adjust the y offset as needed
-    // }
+    // get the paddle entity and its resources
+    let (_, collected_resources) = paddle_query
+        .get_single_mut()
+        .expect("Failed to get paddle entity");
+
+    for (resource, mut text) in query.iter_mut() {
+        let count = collected_resources.counts.get(&resource.0);
+        if let Some(c) = count {
+            text.0 = format!(" {} ", c);
+        } else {
+            text.0 = format!("");
+        }
+    }
+}
+
+#[derive(Event, Debug, Default)]
+pub struct UpdateStatsBarDepthEvent {
+    pub depth: i32,
+}
+
+fn update_stats_bar_depth(
+    trigger: Trigger<UpdateStatsBarDepthEvent>,
+    mut query: Query<(&StatsBarText, &mut Text)>,
+) {
+    for (stats_bar_text, mut text) in query.iter_mut() {
+        if stats_bar_text.0 == "Depth" {
+            text.0 = format!("Depth: {}", trigger.depth);
+        }
+    }
+}
+
+#[derive(Event, Debug, Default)]
+pub struct UpdateStatsBarBallsEvent {
+    pub balls: u32,
+}
+
+fn update_stats_bar_balls(
+    trigger: Trigger<UpdateStatsBarBallsEvent>,
+    mut query: Query<(&StatsBarText, &mut Text)>,
+) {
+    for (stats_bar_text, mut text) in query.iter_mut() {
+        if stats_bar_text.0 == "Balls" {
+            text.0 = format!("Balls: {}", trigger.balls);
+        }
+    }
 }
