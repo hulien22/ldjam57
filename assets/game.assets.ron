@@ -41,6 +41,9 @@
     "ball": File (
         path: "textures/ball.png"
     ),
+    "shop_background": File(
+        path: "textures/shop_no_writting.png"
+    ),
     "damage_icon": File(
         path: "textures/ICON_bomb_ball.png"
     ),

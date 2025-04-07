@@ -1,5 +1,6 @@
 use app_state::AppState;
 use asset_loading::{AssetLoadingPlugin, GameImageAssets};
+use audio::InternalAudioPlugin;
 use ball::BallPlugin;
 use bevy::{
     asset::AssetMetaCheck,
@@ -25,6 +26,7 @@ use ui::UiPlugin;
 
 mod app_state;
 mod asset_loading;
+mod audio;
 mod ball;
 mod blocks;
 mod paddle;
@@ -93,6 +95,7 @@ fn main() {
         .add_plugins(PhysicsPlugin)
         .add_plugins(UiPlugin)
         .add_plugins(ShopPlugin)
+        .add_plugins(InternalAudioPlugin)
         .add_systems(Startup, setup_camera)
         .add_systems(OnEnter(AppState::Game), spawn_background)
         .add_systems(Update, on_resize_system)
