@@ -246,9 +246,10 @@ fn on_resize_system(
             }
         }
 
-        // calc change in vert size
-        let scale = 1280. / orthoproj.area.height();
-        // set ui scale
-        ui_scale.0 = scale;
+        // todo make this based off horizontal? use screen size
+        // // calc change in vert size
+        // let scale = 1280. / orthoproj.area.height();
+        // // set ui scale
+        // ui_scale.0 = scale;
     }
 }
