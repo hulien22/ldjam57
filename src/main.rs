@@ -3,6 +3,7 @@ use asset_loading::AssetLoadingPlugin;
 use ball::BallPlugin;
 use bevy::{
     asset::AssetMetaCheck,
+    core_pipeline::{bloom::Bloom, tonemapping::Tonemapping},
     log::{Level, LogPlugin},
     prelude::*,
     render::camera::ScalingMode,
@@ -10,6 +11,7 @@ use bevy::{
     window::WindowResolution,
 };
 use bevy_dev_tools::fps_overlay::{FpsOverlayConfig, FpsOverlayPlugin};
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_tweening::TweeningPlugin;
 use blocks::{BLOCK_GROUP_OFFSET, BlocksPlugin, WALL_WIDTH};
 use paddle::PaddlePlugin;
@@ -73,6 +75,7 @@ fn main() {
                 enabled: true,
             },
         })
+        .add_plugins(WorldInspectorPlugin::new())
         .add_plugins(AssetLoadingPlugin)
         .add_plugins(TweeningPlugin)
         .add_plugins(ParticlesPlugin)
@@ -89,6 +92,13 @@ fn main() {
 fn setup_camera(mut commands: Commands) {
     commands.spawn((
         Camera2d,
+        Camera {
+            hdr: true,
+            ..default()
+        },
+        // // Using a tonemapper that desaturates to white is recommended (https://bevyengine.org/examples/2d-rendering/bloom-2d/)
+        Tonemapping::TonyMcMapface,
+        Bloom { ..default() },
         Name::new("Camera"),
         OrthographicProjection {
             scale: 1.0,
