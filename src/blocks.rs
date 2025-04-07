@@ -1,8 +1,12 @@
 use bevy::prelude::*;
-use bevy_rapier2d::prelude::{Collider, Friction, Restitution, RigidBody};
+use bevy_rapier2d::prelude::{Collider, CollisionGroups, Friction, Restitution, RigidBody};
 use noise::{Fbm, MultiFractal, NoiseFn, Perlin, RidgedMulti};
 
-use crate::{app_state::AppState, asset_loading::GameImageAssets};
+use crate::{
+    app_state::AppState,
+    asset_loading::GameImageAssets,
+    physics::{BALL_GROUP, BLOCK_GROUP, PADDLE_GROUP, WALL_GROUP},
+};
 
 pub struct BlocksPlugin;
 
@@ -40,6 +44,7 @@ fn spawn_blocks(mut commands: Commands) {
         Friction::coefficient(0.0),
         Restitution::coefficient(1.1),
         Collider::halfspace(Vec2 { x: -1.0, y: 0.0 }).unwrap(),
+        CollisionGroups::new(WALL_GROUP, BALL_GROUP | PADDLE_GROUP),
     ));
     commands.spawn((
         Transform::from_xyz(-BLOCK_GROUP_OFFSET, 0.0, 0.0),
@@ -47,6 +52,7 @@ fn spawn_blocks(mut commands: Commands) {
         Friction::coefficient(0.0),
         Restitution::coefficient(1.1),
         Collider::halfspace(Vec2 { x: 1.0, y: 0.0 }).unwrap(),
+        CollisionGroups::new(WALL_GROUP, BALL_GROUP | PADDLE_GROUP),
     ));
 
     // UI walls
@@ -98,6 +104,7 @@ fn spawn_block_at(j: usize, i: usize, commands: &mut Commands) {
         Block(block_type),
         StateScoped(AppState::Game),
         Name::new(format!("Block {} {}", i, j)),
+        CollisionGroups::new(BLOCK_GROUP, BALL_GROUP | PADDLE_GROUP),
     ));
 }
 

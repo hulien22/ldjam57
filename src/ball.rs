@@ -3,13 +3,16 @@ use std::time::Duration;
 use bevy::{prelude::*, utils::HashMap};
 use bevy_rapier2d::prelude::{
     ActiveCollisionTypes, ActiveEvents, Ccd, CoefficientCombineRule, Collider, CollisionEvent,
-    Damping, Friction, GravityScale, LockedAxes, Restitution, RigidBody, Velocity,
+    CollisionGroups, Damping, Friction, GravityScale, LockedAxes, Restitution, RigidBody, Velocity,
 };
 use rand::Rng;
 
 use crate::{
-    app_state::AppState, asset_loading::GameImageAssets, blocks::BlockType,
+    app_state::AppState,
+    asset_loading::GameImageAssets,
+    blocks::BlockType,
     particles::BoxParticlesEvent,
+    physics::{BALL_GROUP, BLOCK_GROUP, PADDLE_GROUP, WALL_GROUP},
 };
 
 pub struct BallPlugin;
@@ -100,6 +103,7 @@ pub fn spawn_ball(mut commands: Commands, transform: Transform, assets: Res<Game
             ActiveCollisionTypes::all(),
             ActiveEvents::COLLISION_EVENTS,
             Ccd::enabled(),
+            CollisionGroups::new(BALL_GROUP, WALL_GROUP | PADDLE_GROUP | BLOCK_GROUP),
         ),
         StateScoped(AppState::Game),
         Name::new("Ball"),

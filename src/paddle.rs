@@ -3,8 +3,8 @@ use std::time::Duration;
 use bevy::{math::VectorSpace, prelude::*};
 use bevy_rapier2d::prelude::{
     ActiveCollisionTypes, ActiveEvents, Ccd, Collider, ColliderMassProperties, CollisionEvent,
-    ExternalImpulse, Friction, GravityScale, KinematicCharacterController, LockedAxes, Restitution,
-    RigidBody, Velocity,
+    CollisionGroups, ExternalImpulse, Friction, GravityScale, KinematicCharacterController,
+    LockedAxes, Restitution, RigidBody, Velocity,
 };
 use leafwing_input_manager::{input_map, prelude::*};
 use rand::Rng;
@@ -14,6 +14,7 @@ use crate::{
     asset_loading::GameImageAssets,
     ball::{CollectedResources, spawn_ball},
     particles::{BoxParticle, BoxParticlesEvent},
+    physics::{BALL_GROUP, BLOCK_GROUP, PADDLE_GROUP, WALL_GROUP},
 };
 
 pub struct PaddlePlugin;
@@ -80,6 +81,7 @@ fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
                 ActiveCollisionTypes::all(),
                 ActiveEvents::COLLISION_EVENTS,
                 Ccd::enabled(),
+                CollisionGroups::new(PADDLE_GROUP, WALL_GROUP | BALL_GROUP | BLOCK_GROUP),
             ),
             StateScoped(AppState::Game),
             Name::new("Paddle"),

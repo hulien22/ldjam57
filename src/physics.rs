@@ -15,6 +15,11 @@ use crate::{ball::Ball, blocks::DespawnHack};
 
 pub struct PhysicsPlugin;
 
+pub const BLOCK_GROUP: bevy_rapier2d::geometry::Group = Group::GROUP_1;
+pub const BALL_GROUP: bevy_rapier2d::geometry::Group = Group::GROUP_2;
+pub const PADDLE_GROUP: bevy_rapier2d::geometry::Group = Group::GROUP_3;
+pub const WALL_GROUP: bevy_rapier2d::geometry::Group = Group::GROUP_4;
+
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(32.0))
