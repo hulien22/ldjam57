@@ -69,7 +69,7 @@ const PADDLE_WIDTH: f32 = 32.2;
 const PADDLE_HEIGHT: f32 = 5.0;
 const UFO_SCALE: f32 = PADDLE_HEIGHT / 60. * 2.;
 
-const PADDLE_MAX_HEIGHT: f32 = 500.0;
+const PADDLE_MAX_HEIGHT: f32 = 1000.0;
 const PADDLE_BLOOM: f32 = 1.4;
 
 fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
@@ -83,7 +83,7 @@ fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
             //         y: PADDLE_HEIGHT,
             //     },
             // ),
-            Transform::from_xyz(0.0, 30.0, 0.0),
+            Transform::from_xyz(0.0, 980.0, 0.0),
             Collider::cuboid(PADDLE_WIDTH / 2., PADDLE_HEIGHT),
             RigidBody::Dynamic,
             // KinematicCharacterController::default(),
@@ -130,6 +130,63 @@ fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
                 CollisionGroups::new(PADDLE_SHOP_GROUP, PADDLE_SHOP_GROUP),
             ));
         });
+
+    // spawn other random bg stuff here too cuz why not
+    commands.spawn((
+        Sprite {
+            image: assets.title.clone(),
+            custom_size: Some(Vec2 { x: 1280., y: 700. }),
+            ..Default::default()
+        },
+        Transform::from_xyz(0.0, 1080.0, -50.0),
+        Name::new("Title"),
+    ));
+    commands.spawn((
+        Sprite {
+            image: assets.wasd.clone(),
+            custom_size: Some(Vec2 { x: 100., y: 100. }),
+            ..Default::default()
+        },
+        Transform::from_xyz(150.0, 800.0, -50.0),
+        Name::new("WASD"),
+    ));
+    commands.spawn((
+        Sprite {
+            image: assets.arrows.clone(),
+            custom_size: Some(Vec2 { x: 100., y: 100. }),
+            ..Default::default()
+        },
+        Transform::from_xyz(-150.0, 800.0, -50.0),
+        Name::new("Arrows"),
+    ));
+    commands.spawn((
+        Sprite {
+            image: assets.movetext.clone(),
+            custom_size: Some(Vec2 { x: 300., y: 100. }),
+            // custom_size: Some(Vec2 { x: 193., y: 60. } * UFO_SCALE),
+            ..Default::default()
+        },
+        Transform::from_xyz(0.0, 800.0, -50.0),
+        Name::new("MoveText"),
+    ));
+    commands.spawn((
+        Sprite {
+            image: assets.space.clone(),
+            custom_size: Some(Vec2 { x: 100., y: 50. }),
+            ..Default::default()
+        },
+        Transform::from_xyz(-150.0, 720.0, -50.0),
+        Name::new("space"),
+    ));
+    commands.spawn((
+        Sprite {
+            image: assets.shootballtext.clone(),
+            custom_size: Some(Vec2 { x: 300., y: 100. }),
+            ..Default::default()
+        },
+        Transform::from_xyz(100.0, 720.0, -50.0),
+        Name::new("shootballtext"),
+    ));
 }
 
 fn move_paddle(
