@@ -193,7 +193,7 @@ fn on_paddle_hit(
                     z_index: 5.0,
                     color: bloom_color,
                     target_color: bloom_color,
-                    size: Vec2::new(4., 4.),
+                    size: Vec2::new(10., 10.),
                     target_scale: Vec3::ONE * 1.2,
                     duration: Duration::from_millis(500),
                 });
