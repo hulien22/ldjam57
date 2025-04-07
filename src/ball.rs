@@ -142,7 +142,7 @@ fn override_physics(
         query.iter_mut()
     {
         // Check if the ball is outside the screen bounds
-        if transform.translation.y > 1000.0 {
+        if transform.translation.y > 3000.0 {
             commands.entity(entity).despawn_recursive();
             continue;
         }
