@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::{math::VectorSpace, prelude::*};
 use bevy_rapier2d::prelude::{
     ActiveCollisionTypes, ActiveEvents, Ccd, Collider, ColliderMassProperties, CollisionEvent,
@@ -10,6 +12,7 @@ use crate::{
     app_state::AppState,
     asset_loading::GameImageAssets,
     ball::{CollectedResources, spawn_ball},
+    particles::{BoxParticle, BoxParticlesEvent},
 };
 
 pub struct PaddlePlugin;
@@ -27,6 +30,7 @@ impl PaddleAction {
 
         // kbm controls only for now
         input_map.insert_dual_axis(Self::Move, VirtualDPad::arrow_keys());
+        input_map.insert_dual_axis(Self::Move, VirtualDPad::wasd());
         input_map.insert(Self::Fire, KeyCode::Space);
 
         input_map
@@ -99,7 +103,7 @@ fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
 fn move_paddle(
     mut query: Query<(&ActionState<PaddleAction>, &mut Transform, &mut Velocity), With<Paddle>>,
     time: Res<Time>,
-    commands: Commands,
+    mut commands: Commands,
 ) {
     let (action_state, mut transform, mut vel) =
         query.get_single_mut().expect("Failed to get paddle entity");
@@ -109,7 +113,7 @@ fn move_paddle(
     let mut lin_damping = time.delta_secs() * 10.0;
     if action_state.axis_pair(&PaddleAction::Move) != Vec2::ZERO {
         // controller.translation = Some(action_state.axis_pair(&PaddleAction::Move) * 5.0);
-        target_lin_vel = action_state.axis_pair(&PaddleAction::Move) * 100.0;
+        target_lin_vel = action_state.clamped_axis_pair(&PaddleAction::Move) * 100.0;
         lin_damping *= 2.0;
     }
     vel.linvel = vel.linvel.lerp(target_lin_vel, lin_damping);
@@ -135,6 +139,16 @@ fn move_paddle(
         }
         vel.angvel = FloatExt::lerp(vel.angvel, target_ang_vel, ang_damping);
     }
+
+    commands.trigger(BoxParticlesEvent {
+        init_position: Vec2::new(transform.translation.x, transform.translation.y),
+        target_position: transform.translation.truncate() - vel.linvel.normalize(),
+        z_index: -1.0,
+        color: Color::srgb(0.2, 0.2, 0.2),
+        size: Vec2::new(10., 10.),
+        target_scale: Vec3::ZERO,
+        duration: Duration::from_secs(2),
+    });
 
     if action_state.just_pressed(&PaddleAction::Fire) {
         spawn_ball(commands, transform.clone());

@@ -23,14 +23,29 @@ impl Plugin for AssetLoadingPlugin {
 
 #[derive(AssetCollection, Resource)]
 pub struct GameImageAssets {
+    #[asset(key = "background")]
+    pub background: Handle<Image>,
+
     #[asset(key = "crack")]
     pub crack: Handle<Image>,
-    #[asset(key = "dirt")]
-    pub dirt: Handle<Image>,
-    #[asset(key = "iron")]
-    pub iron: Handle<Image>,
-    #[asset(key = "obsidian")]
-    pub obsidian: Handle<Image>,
+
+    #[asset(key = "blue")]
+    pub blue: Handle<Image>,
+    #[asset(key = "dark_blue")]
+    pub dark_blue: Handle<Image>,
+    #[asset(key = "light_blue")]
+    pub light_blue: Handle<Image>,
+    #[asset(key = "purple")]
+    pub purple: Handle<Image>,
+    #[asset(key = "light_purple")]
+    pub light_purple: Handle<Image>,
+    #[asset(key = "pink")]
+    pub pink: Handle<Image>,
+    #[asset(key = "red")]
+    pub red: Handle<Image>,
+    #[asset(key = "orange")]
+    pub orange: Handle<Image>,
+
     #[asset(key = "ufo_top")]
     pub ufo_top: Handle<Image>,
     #[asset(key = "ufo_bottom")]
