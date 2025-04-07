@@ -22,8 +22,8 @@ use paddle::PaddlePlugin;
 use particles::ParticlesPlugin;
 use physics::PhysicsPlugin;
 use shop::ShopPlugin;
+use shoppanel::ShopPanelPlugin;
 use statsbar::{STATS_BAR_HEIGHT, StatsBarPlugin};
-use ui::UiPlugin;
 
 mod app_state;
 mod asset_loading;
@@ -34,8 +34,8 @@ mod paddle;
 mod particles;
 mod physics;
 mod shop;
+mod shoppanel;
 mod statsbar;
-mod ui;
 
 fn main() {
     App::new()
@@ -95,9 +95,9 @@ fn main() {
         .add_plugins(PaddlePlugin)
         .add_plugins(BallPlugin)
         .add_plugins(PhysicsPlugin)
-        .add_plugins(UiPlugin)
         .add_plugins(StatsBarPlugin)
         .add_plugins(ShopPlugin)
+        .add_plugins(ShopPanelPlugin)
         .add_plugins(InternalAudioPlugin)
         .add_systems(Startup, setup_camera)
         .add_systems(OnEnter(AppState::Game), spawn_background)

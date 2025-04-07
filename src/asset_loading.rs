@@ -17,22 +17,22 @@ impl Plugin for AssetLoadingPlugin {
                 .with_dynamic_assets_file::<StandardDynamicAssetCollection>("game.assets.ron")
                 .load_collection::<GameImageAssets>()
                 .load_collection::<AudioAssets>()
-                .load_collection::<UiComponentAssets>()
+                // .load_collection::<UiComponentAssets>()
                 .continue_to_state(AppState::Game)
                 .on_failure_continue_to_state(AppState::BadStateSadEmoji),
         );
     }
 }
 
-#[derive(AssetCollection, Resource)]
-pub struct UiComponentAssets {
-    #[asset(path = "ui/shop.html")]
-    pub shop: Handle<HtmlTemplate>,
-    #[asset(path = "ui/components/shop_item.html")]
-    pub shop_item: Handle<HtmlTemplate>,
-    #[asset(path = "ui/components/resource.html")]
-    pub resource: Handle<HtmlTemplate>,
-}
+// #[derive(AssetCollection, Resource)]
+// pub struct UiComponentAssets {
+//     #[asset(path = "ui/shop.html")]
+//     pub shop: Handle<HtmlTemplate>,
+//     #[asset(path = "ui/components/shop_item.html")]
+//     pub shop_item: Handle<HtmlTemplate>,
+//     #[asset(path = "ui/components/resource.html")]
+//     pub resource: Handle<HtmlTemplate>,
+// }
 
 #[derive(AssetCollection, Resource)]
 pub struct AudioAssets {

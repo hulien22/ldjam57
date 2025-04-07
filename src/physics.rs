@@ -11,6 +11,7 @@ use crate::{
     blocks::{Block, BlockType, HitPoints, block_break},
     paddle::Paddle,
     shop::ShopStats,
+    shoppanel::{ShopPanel, UpdateShopPanelsEvent},
     statsbar::UpdateStatsBarResourcesEvent,
 };
 use crate::{ball::Ball, blocks::DespawnHack};
@@ -21,6 +22,7 @@ pub const BLOCK_GROUP: bevy_rapier2d::geometry::Group = Group::GROUP_1;
 pub const BALL_GROUP: bevy_rapier2d::geometry::Group = Group::GROUP_2;
 pub const PADDLE_GROUP: bevy_rapier2d::geometry::Group = Group::GROUP_3;
 pub const WALL_GROUP: bevy_rapier2d::geometry::Group = Group::GROUP_4;
+pub const PADDLE_SHOP_GROUP: bevy_rapier2d::geometry::Group = Group::GROUP_5;
 
 impl Plugin for PhysicsPlugin {
     fn build(&self, app: &mut App) {
@@ -38,6 +40,7 @@ fn process_collisions(
     mut ball_query: Query<(Entity, &mut CollectedResources), With<Ball>>,
     mut paddle_query: Query<(Entity, &mut CollectedResources), (With<Paddle>, Without<Ball>)>,
     mut block_query: Query<(Entity, &mut HitPoints, &Transform, &Collider, &Block), Without<Ball>>,
+    mut shop_panel_query: Query<(Entity, &mut ShopPanel)>,
     shop_stats: Res<ShopStats>,
     mut commands: Commands,
 ) {
@@ -91,8 +94,24 @@ fn process_collisions(
                         &mut ball_query,
                     );
                 }
+                // Process shop panel collisions.
+                else if let Ok((_, mut shop_panel)) = shop_panel_query.get_mut(lhs) {
+                    shop_panel.enabled = true;
+                    commands.trigger(UpdateShopPanelsEvent);
+                } else if let Ok((_, mut shop_panel)) = shop_panel_query.get_mut(rhs) {
+                    shop_panel.enabled = true;
+                    commands.trigger(UpdateShopPanelsEvent);
+                }
             }
-            _ => {}
+            CollisionEvent::Stopped(lhs, rhs, collision_event_flags) => {
+                if let Ok((_, mut shop_panel)) = shop_panel_query.get_mut(lhs) {
+                    shop_panel.enabled = false;
+                    commands.trigger(UpdateShopPanelsEvent);
+                } else if let Ok((_, mut shop_panel)) = shop_panel_query.get_mut(rhs) {
+                    shop_panel.enabled = false;
+                    commands.trigger(UpdateShopPanelsEvent);
+                }
+            }
         }
     }
 }

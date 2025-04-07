@@ -4,7 +4,7 @@ use bevy::{math::VectorSpace, prelude::*};
 use bevy_rapier2d::prelude::{
     ActiveCollisionTypes, ActiveEvents, Ccd, Collider, ColliderMassProperties, CollisionEvent,
     CollisionGroups, ExternalImpulse, Friction, GravityScale, KinematicCharacterController,
-    LockedAxes, Restitution, RigidBody, Velocity,
+    LockedAxes, Restitution, RigidBody, Sensor, Velocity,
 };
 use leafwing_input_manager::{input_map, prelude::*};
 use rand::Rng;
@@ -15,9 +15,10 @@ use crate::{
     ball::{CollectedResources, spawn_ball},
     blocks::BLOCK_SIZE,
     particles::{BoxParticle, BoxParticlesEvent},
-    physics::{BALL_GROUP, BLOCK_GROUP, PADDLE_GROUP, WALL_GROUP},
-    shop::ShopStats,
-    statsbar::{UpdateStatsBarBallsEvent, UpdateStatsBarDepthEvent},
+    physics::{BALL_GROUP, BLOCK_GROUP, PADDLE_GROUP, PADDLE_SHOP_GROUP, WALL_GROUP},
+    shop::{ShopItem, ShopStats, try_buy},
+    shoppanel::{ShopPanel, UpdateShopPanelsEvent},
+    statsbar::{UpdateStatsBarBallsEvent, UpdateStatsBarDepthEvent, UpdateStatsBarResourcesEvent},
 };
 
 pub struct PaddlePlugin;
@@ -115,6 +116,13 @@ fn spawn_paddle(mut commands: Commands, assets: Res<GameImageAssets>) {
                 color: Color::srgb(PADDLE_BLOOM, PADDLE_BLOOM, PADDLE_BLOOM),
                 ..Default::default()
             });
+            parent.spawn((
+                Collider::ball(1.),
+                ActiveCollisionTypes::all(),
+                ActiveEvents::COLLISION_EVENTS,
+                Sensor,
+                CollisionGroups::new(PADDLE_SHOP_GROUP, PADDLE_SHOP_GROUP),
+            ));
         });
 }
 
@@ -125,15 +133,17 @@ fn move_paddle(
             &mut Transform,
             &mut Velocity,
             &mut NumBalls,
+            &mut CollectedResources,
         ),
         With<Paddle>,
     >,
     time: Res<Time>,
     mut commands: Commands,
     assets: Res<GameImageAssets>,
-    stats: Res<ShopStats>,
+    mut shop_panel_query: Query<(&ShopPanel)>,
+    mut stats: ResMut<ShopStats>,
 ) {
-    let (action_state, mut transform, mut vel, mut num_balls) =
+    let (action_state, mut transform, mut vel, mut num_balls, mut collected_resources) =
         query.get_single_mut().expect("Failed to get paddle entity");
 
     // lerp to target velocity
@@ -171,7 +181,34 @@ fn move_paddle(
     if action_state.just_pressed(&PaddleAction::Fire) && num_balls.0 > 0 {
         num_balls.0 -= 1;
         commands.trigger(UpdateStatsBarBallsEvent { balls: num_balls.0 });
-        spawn_ball(commands, transform.clone(), assets);
+        spawn_ball(&mut commands, transform.clone(), assets);
+    }
+
+    if action_state.just_pressed(&PaddleAction::Interact) {
+        // find enabled shop panel
+        for shop_panel in shop_panel_query.iter() {
+            if !shop_panel.enabled {
+                continue;
+            }
+
+            // try to buy
+            if let Some(cost) = match shop_panel.item {
+                ShopItem::Damage => stats.damage_cost(),
+                ShopItem::Speed => stats.speed_cost(),
+            } {
+                if try_buy(&cost, &mut collected_resources.counts) {
+                    match shop_panel.item {
+                        ShopItem::Damage => stats.damage_level += 1,
+                        ShopItem::Speed => stats.speed_level += 1,
+                    }
+                    commands.trigger(UpdateStatsBarResourcesEvent);
+                    commands.trigger(UpdateShopPanelsEvent);
+                } else {
+                    info!("Failed to buy: {:?}", shop_panel.item);
+                    // todo play error sound
+                }
+            }
+        }
     }
 }
 
