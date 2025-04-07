@@ -83,7 +83,7 @@ impl ShopStats {
     }
 
     pub fn size(&self) -> f32 {
-        self.size_level as f32 * 10.0
+        self.size_level as f32 * 10.0 + 30.0
     }
 
     pub fn size_cost(&self) -> Option<HashMap<BlockType, u32>> {
