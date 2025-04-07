@@ -40,5 +40,11 @@
     ),
     "ball": File (
         path: "textures/ball.png"
+    ),
+    "damage_icon": File(
+        path: "textures/ICON_bomb_ball.png"
+    ),
+    "speed_icon": File(
+        path: "textures/ICON_pro_ball.png"
     )
 })

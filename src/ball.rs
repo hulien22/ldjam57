@@ -1,11 +1,11 @@
-use std::time::Duration;
-
-use bevy::{prelude::*, utils::HashMap};
+use bevy::prelude::*;
 use bevy_rapier2d::prelude::{
     ActiveCollisionTypes, ActiveEvents, Ccd, CoefficientCombineRule, Collider, CollisionEvent,
     CollisionGroups, Damping, Friction, GravityScale, LockedAxes, Restitution, RigidBody, Velocity,
 };
 use rand::Rng;
+use std::collections::HashMap;
+use std::time::Duration;
 
 use crate::{
     app_state::AppState,

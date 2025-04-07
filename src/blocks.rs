@@ -57,34 +57,34 @@ fn spawn_blocks(mut commands: Commands) {
     ));
 
     // UI walls
-    commands
-        .spawn(Node {
-            width: Val::Percent(100.0),
-            height: Val::Percent(100.0),
-            justify_content: JustifyContent::SpaceBetween,
-            ..Default::default()
-        })
-        .with_children(|parent| {
-            // left vertical fill (border)
-            parent.spawn((
-                Node {
-                    width: Val::Px(WALL_WIDTH),
-                    // border: UiRect::all(Val::Px(2.)),
-                    ..default()
-                },
-                BackgroundColor(Color::srgb(0., 0., 0.)),
-            ));
-            // right vertical fill (border)
-            parent.spawn((
-                Node {
-                    width: Val::Px(WALL_WIDTH),
-                    // border: UiRect::all(Val::Px(2.)),
-                    right: Val::Percent(0.0),
-                    ..default()
-                },
-                BackgroundColor(Color::srgb(0., 0., 0.)),
-            ));
-        });
+    // commands
+    //     .spawn(Node {
+    //         width: Val::Percent(100.0),
+    //         height: Val::Percent(100.0),
+    //         justify_content: JustifyContent::SpaceBetween,
+    //         ..Default::default()
+    //     })
+    //     .with_children(|parent| {
+    //         // left vertical fill (border)
+    //         parent.spawn((
+    //             Node {
+    //                 width: Val::Px(WALL_WIDTH),
+    //                 // border: UiRect::all(Val::Px(2.)),
+    //                 ..default()
+    //             },
+    //             BackgroundColor(Color::srgb(0., 0., 0.)),
+    //         ));
+    //         // right vertical fill (border)
+    //         parent.spawn((
+    //             Node {
+    //                 width: Val::Px(WALL_WIDTH),
+    //                 // border: UiRect::all(Val::Px(2.)),
+    //                 right: Val::Percent(0.0),
+    //                 ..default()
+    //             },
+    //             BackgroundColor(Color::srgb(0., 0., 0.)),
+    //         ));
+    //     });
 }
 
 fn spawn_block_at(j: usize, i: usize, commands: &mut Commands) {
@@ -301,7 +301,6 @@ fn pick_block_type(position: Vec2) -> BlockType {
         .set_frequency(0.04)
         .get([position.x as f64, position.y as f64]);
 
-    // info!("{} {}", a, b);
     if g > 0.65 {
         BlockType::Blue
     } else if b > 0.65 {

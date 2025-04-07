@@ -15,15 +15,17 @@ use crate::{
     ball::{CollectedResources, spawn_ball},
     particles::{BoxParticle, BoxParticlesEvent},
     physics::{BALL_GROUP, BLOCK_GROUP, PADDLE_GROUP, WALL_GROUP},
+    shop::ShopStats,
 };
 
 pub struct PaddlePlugin;
 
 #[derive(Actionlike, PartialEq, Eq, Hash, Clone, Copy, Debug, Reflect)]
-enum PaddleAction {
+pub enum PaddleAction {
     #[actionlike(DualAxis)]
     Move,
     Fire,
+    Interact,
 }
 
 impl PaddleAction {
@@ -34,6 +36,7 @@ impl PaddleAction {
         input_map.insert_dual_axis(Self::Move, VirtualDPad::arrow_keys());
         input_map.insert_dual_axis(Self::Move, VirtualDPad::wasd());
         input_map.insert(Self::Fire, KeyCode::Space);
+        input_map.insert(Self::Interact, KeyCode::KeyE);
 
         input_map
     }
@@ -114,6 +117,7 @@ fn move_paddle(
     time: Res<Time>,
     mut commands: Commands,
     assets: Res<GameImageAssets>,
+    stats: Res<ShopStats>,
 ) {
     let (action_state, mut transform, mut vel) =
         query.get_single_mut().expect("Failed to get paddle entity");
@@ -123,7 +127,7 @@ fn move_paddle(
     let mut lin_damping = time.delta_secs() * 10.0;
     if action_state.axis_pair(&PaddleAction::Move) != Vec2::ZERO {
         // controller.translation = Some(action_state.axis_pair(&PaddleAction::Move) * 5.0);
-        target_lin_vel = action_state.clamped_axis_pair(&PaddleAction::Move) * 100.0;
+        target_lin_vel = action_state.clamped_axis_pair(&PaddleAction::Move) * stats.speed();
         lin_damping *= 2.0;
     }
     vel.linvel = vel.linvel.lerp(target_lin_vel, lin_damping);
