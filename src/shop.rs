@@ -27,12 +27,16 @@ impl Plugin for ShopPlugin {
 pub enum ShopItem {
     Damage,
     Speed,
+    Capacity,
+    Size,
 }
 
 #[derive(Resource)]
 pub struct ShopStats {
     pub damage_level: u8,
     pub speed_level: u8,
+    pub capacity_level: u8,
+    pub size_level: u8,
 }
 
 impl ShopStats {
@@ -63,6 +67,34 @@ impl ShopStats {
             _ => None,
         }
     }
+
+    pub fn capacity(&self) -> u32 {
+        self.capacity_level as u32 * 10
+    }
+
+    pub fn capacity_cost(&self) -> Option<HashMap<BlockType, u32>> {
+        match self.capacity_level {
+            1 => Some(HashMap::from([(BlockType::LightBlue, 10)])),
+            2 => Some(HashMap::from([(BlockType::LightBlue, 50)])),
+            3 => Some(HashMap::from([(BlockType::LightBlue, 100)])),
+            4 => Some(HashMap::from([(BlockType::LightBlue, 500)])),
+            _ => None,
+        }
+    }
+
+    pub fn size(&self) -> f32 {
+        self.size_level as f32 * 10.0
+    }
+
+    pub fn size_cost(&self) -> Option<HashMap<BlockType, u32>> {
+        match self.size_level {
+            1 => Some(HashMap::from([(BlockType::LightBlue, 10)])),
+            2 => Some(HashMap::from([(BlockType::LightBlue, 50)])),
+            3 => Some(HashMap::from([(BlockType::LightBlue, 100)])),
+            4 => Some(HashMap::from([(BlockType::LightBlue, 500)])),
+            _ => None,
+        }
+    }
 }
 
 impl Default for ShopStats {
@@ -70,6 +102,8 @@ impl Default for ShopStats {
         Self {
             damage_level: 1,
             speed_level: 1,
+            capacity_level: 1,
+            size_level: 1,
         }
     }
 }
@@ -114,11 +148,15 @@ pub fn on_shop_item_pressed(
         if let Some(cost) = match item {
             ShopItem::Damage => shop_stats.damage_cost(),
             ShopItem::Speed => shop_stats.speed_cost(),
+            ShopItem::Capacity => shop_stats.capacity_cost(),
+            ShopItem::Size => shop_stats.size_cost(),
         } {
             if try_buy(&cost, &mut resources.counts) {
                 match item {
                     ShopItem::Damage => shop_stats.damage_level += 1,
                     ShopItem::Speed => shop_stats.speed_level += 1,
+                    ShopItem::Capacity => shop_stats.capacity_level += 1,
+                    ShopItem::Size => shop_stats.size_level += 1,
                 }
             } else {
                 info!("Failed to buy: {:?}", item);

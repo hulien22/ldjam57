@@ -81,48 +81,128 @@ fn spawn_shop(mut commands: Commands, assets: Res<GameImageAssets>) {
             }
         });
 
-    commands.spawn((
-        Sprite {
-            image: assets.shop_background.clone(),
-            custom_size: Some(Vec2::new(50.0, 50.0)),
-            ..Default::default()
-        },
-        ShopPanel {
-            enabled: false,
-            item: ShopItem::Speed,
-            upgrade: "Speed Upgrade".to_string(),
-        },
-        Transform::from_xyz(-100.0, 100.0, -50.0),
-        Name::new("Speed Upgrade"),
-        (
-            Collider::cuboid(25.0, 25.0),
-            ActiveCollisionTypes::all(),
-            ActiveEvents::COLLISION_EVENTS,
-            Sensor,
-            CollisionGroups::new(PADDLE_SHOP_GROUP, PADDLE_SHOP_GROUP),
-        ),
-    ));
-    commands.spawn((
-        Sprite {
-            image: assets.shop_background.clone(),
-            custom_size: Some(Vec2::new(50.0, 50.0)),
-            ..Default::default()
-        },
-        ShopPanel {
-            enabled: false,
-            item: ShopItem::Damage,
-            upgrade: "Ball Damage Upgrade".to_string(),
-        },
-        Transform::from_xyz(-200.0, 100.0, -50.0),
-        Name::new("Ball Upgrade"),
-        (
-            Collider::cuboid(25.0, 25.0),
-            ActiveCollisionTypes::all(),
-            ActiveEvents::COLLISION_EVENTS,
-            Sensor,
-            CollisionGroups::new(PADDLE_SHOP_GROUP, PADDLE_SHOP_GROUP),
-        ),
-    ));
+    const SHOP_PANEL_WIDTH: f32 = 95.0;
+
+    commands
+        .spawn((
+            Sprite {
+                image: assets.shop_background.clone(),
+                custom_size: Some(Vec2::new(SHOP_PANEL_WIDTH, SHOP_PANEL_WIDTH)),
+                ..Default::default()
+            },
+            ShopPanel {
+                enabled: false,
+                item: ShopItem::Speed,
+                upgrade: "Speed Upgrade".to_string(),
+            },
+            Transform::from_xyz(-100.0, 300.0, -50.0),
+            Name::new("Speed Upgrade"),
+            (
+                Collider::cuboid(SHOP_PANEL_WIDTH / 2.0, SHOP_PANEL_WIDTH / 2.0),
+                ActiveCollisionTypes::all(),
+                ActiveEvents::COLLISION_EVENTS,
+                Sensor,
+                CollisionGroups::new(PADDLE_SHOP_GROUP, PADDLE_SHOP_GROUP),
+            ),
+        ))
+        .with_child((
+            Sprite {
+                image: assets.speed_icon.clone(),
+                custom_size: Some(Vec2::new(50.0, 50.0)),
+                ..Default::default()
+            },
+            Transform::from_xyz(0., -6.0, 1.0),
+        ));
+    commands
+        .spawn((
+            Sprite {
+                image: assets.shop_background.clone(),
+                custom_size: Some(Vec2::new(SHOP_PANEL_WIDTH, SHOP_PANEL_WIDTH)),
+                ..Default::default()
+            },
+            ShopPanel {
+                enabled: false,
+                item: ShopItem::Damage,
+                upgrade: "Ball Damage Upgrade".to_string(),
+            },
+            Transform::from_xyz(-200.0, 300.0, -50.0),
+            Name::new("Ball Upgrade"),
+            (
+                Collider::cuboid(SHOP_PANEL_WIDTH / 2.0, SHOP_PANEL_WIDTH / 2.0),
+                ActiveCollisionTypes::all(),
+                ActiveEvents::COLLISION_EVENTS,
+                Sensor,
+                CollisionGroups::new(PADDLE_SHOP_GROUP, PADDLE_SHOP_GROUP),
+            ),
+        ))
+        .with_child((
+            Sprite {
+                image: assets.damage_icon.clone(),
+                custom_size: Some(Vec2::new(50.0, 50.0)),
+                ..Default::default()
+            },
+            Transform::from_xyz(0., -6.0, 1.0),
+        ));
+    commands
+        .spawn((
+            Sprite {
+                image: assets.shop_background.clone(),
+                custom_size: Some(Vec2::new(SHOP_PANEL_WIDTH, SHOP_PANEL_WIDTH)),
+                ..Default::default()
+            },
+            ShopPanel {
+                enabled: false,
+                item: ShopItem::Capacity,
+                upgrade: "Capacity Upgrade".to_string(),
+            },
+            Transform::from_xyz(-300.0, 300.0, -50.0),
+            Name::new("Capacity Upgrade"),
+            (
+                Collider::cuboid(SHOP_PANEL_WIDTH / 2.0, SHOP_PANEL_WIDTH / 2.0),
+                ActiveCollisionTypes::all(),
+                ActiveEvents::COLLISION_EVENTS,
+                Sensor,
+                CollisionGroups::new(PADDLE_SHOP_GROUP, PADDLE_SHOP_GROUP),
+            ),
+        ))
+        .with_child((
+            Sprite {
+                image: assets.ball_capacity_icon.clone(),
+                custom_size: Some(Vec2::new(50.0, 50.0)),
+                ..Default::default()
+            },
+            Transform::from_xyz(0., -6.0, 1.0),
+        ));
+    commands
+        .spawn((
+            Sprite {
+                image: assets.shop_background.clone(),
+                custom_size: Some(Vec2::new(SHOP_PANEL_WIDTH, SHOP_PANEL_WIDTH)),
+                ..Default::default()
+            },
+            ShopPanel {
+                enabled: false,
+                item: ShopItem::Size,
+                upgrade: "Size Upgrade".to_string(),
+            },
+            Transform::from_xyz(-400.0, 300.0, -50.0),
+            Name::new("Size Upgrade"),
+            (
+                Collider::cuboid(SHOP_PANEL_WIDTH / 2.0, SHOP_PANEL_WIDTH / 2.0),
+                ActiveCollisionTypes::all(),
+                ActiveEvents::COLLISION_EVENTS,
+                Sensor,
+                CollisionGroups::new(PADDLE_SHOP_GROUP, PADDLE_SHOP_GROUP),
+            ),
+        ))
+        .with_child((
+            Sprite {
+                image: assets.paddle_size_icon.clone(),
+                custom_size: Some(Vec2::new(50.0, 50.0)),
+                ..Default::default()
+            },
+            Transform::from_xyz(0., -6.0, 1.0),
+        ));
 
     commands.trigger(UpdateShopPanelsEvent);
 }
@@ -135,7 +215,7 @@ fn update_shop_panels(
     mut query: Query<(&mut Sprite, &ShopPanel)>,
     mut shop_text_query: Query<&mut Text, (With<ShopPanelText>, Without<ShopResourceCost>)>,
     mut shop_cost_query: Query<(&mut Text, &ShopResourceCost)>,
-    mut shop_stats: ResMut<ShopStats>,
+    shop_stats: ResMut<ShopStats>,
 ) {
     let mut shop_text = shop_text_query
         .get_single_mut()
@@ -147,6 +227,8 @@ fn update_shop_panels(
             let level = match shop_panel.item {
                 ShopItem::Damage => shop_stats.damage_level,
                 ShopItem::Speed => shop_stats.speed_level,
+                ShopItem::Capacity => shop_stats.capacity_level,
+                ShopItem::Size => shop_stats.size_level,
             };
             any_enabled = true;
             sprite.color = Color::WHITE; // Normal color
@@ -156,6 +238,8 @@ fn update_shop_panels(
             if let Some(cost) = match shop_panel.item {
                 ShopItem::Damage => shop_stats.damage_cost(),
                 ShopItem::Speed => shop_stats.speed_cost(),
+                ShopItem::Capacity => shop_stats.capacity_cost(),
+                ShopItem::Size => shop_stats.size_cost(),
             } {
                 for (mut text, block_type) in shop_cost_query.iter_mut() {
                     if let Some(&count) = cost.get(&block_type.0) {

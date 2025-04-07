@@ -195,11 +195,15 @@ fn move_paddle(
             if let Some(cost) = match shop_panel.item {
                 ShopItem::Damage => stats.damage_cost(),
                 ShopItem::Speed => stats.speed_cost(),
+                ShopItem::Capacity => stats.capacity_cost(),
+                ShopItem::Size => stats.size_cost(),
             } {
                 if try_buy(&cost, &mut collected_resources.counts) {
                     match shop_panel.item {
                         ShopItem::Damage => stats.damage_level += 1,
                         ShopItem::Speed => stats.speed_level += 1,
+                        ShopItem::Capacity => stats.capacity_level += 1,
+                        ShopItem::Size => stats.size_level += 1,
                     }
                     commands.trigger(UpdateStatsBarResourcesEvent);
                     commands.trigger(UpdateShopPanelsEvent);

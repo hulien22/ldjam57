@@ -45,9 +45,18 @@
         path: "textures/shop_no_writting.png"
     ),
     "damage_icon": File(
-        path: "textures/ICON_bomb_ball.png"
+        path: "textures/Icon_ball_damage.png"
     ),
     "speed_icon": File(
-        path: "textures/ICON_pro_ball.png"
-    )
+        path: "textures/ICON_ufo_dash.png"
+    ),
+    "ball_capacity_icon": File(
+        path: "textures/ICON_ball_capacity.png"
+    ),
+    "paddle_size_icon": File(
+        path: "textures/ICON_ufo_extend.png"
+    ),
+    "refresh_icon": File(
+        path: "textures/ICON_refresh.png"
+    ),
 })

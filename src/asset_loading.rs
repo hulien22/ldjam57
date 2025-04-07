@@ -82,4 +82,10 @@ pub struct GameImageAssets {
     pub damage_icon: Handle<Image>,
     #[asset(key = "speed_icon")]
     pub speed_icon: Handle<Image>,
+    #[asset(key = "ball_capacity_icon")]
+    pub ball_capacity_icon: Handle<Image>,
+    #[asset(key = "paddle_size_icon")]
+    pub paddle_size_icon: Handle<Image>,
+    #[asset(key = "refresh_icon")]
+    pub refresh_icon: Handle<Image>,
 }
