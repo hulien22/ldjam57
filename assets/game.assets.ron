@@ -18,7 +18,7 @@
         path: "textures/Orange_Block1.png"
     ),
     "pink": File (
-        path: "textures/Pink_Block1.png"
+        path: "textures/Dark_Green_Block1.png"
     ),
     "purple": File (
         path: "textures/Purple_Block1.png"

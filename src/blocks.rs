@@ -270,7 +270,7 @@ impl BlockType {
             BlockType::Purple => Color::srgb(0.459, 0.224, 0.784),
             BlockType::LightPurple => Color::srgb(0.678, 0.212, 0.757),
             BlockType::Red => Color::srgb(0.894, 0.333, 0.380),
-            BlockType::Pink => Color::srgb(0.753, 0.180, 0.373),
+            BlockType::Pink => Color::srgb(0.565, 0.773, 0.357),
             BlockType::Orange => Color::srgb(0.945, 0.663, 0.333),
         }
     }
@@ -301,8 +301,8 @@ fn pick_block_type(position: Vec2, seed: u32) -> BlockType {
         .set_lacunarity(2.5)
         .set_octaves(3)
         .get([position.x as f64, position.y as f64]);
-    let d = Fbm::<Perlin>::new(seed + 1212)
-        .set_frequency(0.04)
+    let d = Fbm::<Perlin>::new(seed + 77212)
+        .set_frequency(0.06)
         .get([position.x as f64, position.y as f64]);
     let e = Fbm::<Perlin>::new(seed + 124363)
         .set_frequency(0.04)
@@ -327,14 +327,14 @@ fn pick_block_type(position: Vec2, seed: u32) -> BlockType {
         BlockType::LightBlue
     } else if c > 0.65 {
         BlockType::LightPurple
-    } else if d > 0.65 {
-        BlockType::Pink
+    } else if d > 0.64 {
+        BlockType::Red
     } else if e > 0.62 && blend + position.y > 50.0 {
         BlockType::Orange
     } else if f > 0.7 {
         BlockType::Purple
     } else if g > 0.68 && blend + position.y > 50.0 {
-        BlockType::Red
+        BlockType::Pink
     } else {
         pick_base_block_type(position, seed)
     }

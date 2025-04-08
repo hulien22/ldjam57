@@ -1,5 +1,7 @@
+use std::time::Duration;
+
 use bevy::prelude::*;
-use bevy_kira_audio::{Audio, AudioControl};
+use bevy_kira_audio::{Audio, AudioControl, AudioTween};
 
 use crate::{app_state::AppState, asset_loading::AudioAssets, blocks::DespawnHack};
 
@@ -14,7 +16,10 @@ impl Plugin for InternalAudioPlugin {
 }
 
 fn play_music(assets: Res<AudioAssets>, audio: Res<Audio>) {
-    audio.play(assets.music.clone()).looped();
+    audio
+        .play(assets.music.clone())
+        .fade_in(AudioTween::linear(Duration::from_secs(5)))
+        .looped();
 }
 
 fn play_pop(trigger: Trigger<OnAdd, DespawnHack>, assets: Res<AudioAssets>, audio: Res<Audio>) {

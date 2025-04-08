@@ -91,9 +91,9 @@ impl ShopStats {
     pub fn capacity_cost(&self) -> Option<HashMap<BlockType, u32>> {
         match self.capacity_level {
             1 => Some(HashMap::from([(BlockType::LightBlue, 10)])),
-            2 => Some(HashMap::from([(BlockType::Pink, 5)])),
+            2 => Some(HashMap::from([(BlockType::Pink, 20)])),
             3 => Some(HashMap::from([(BlockType::Purple, 40)])),
-            4 => Some(HashMap::from([(BlockType::Red, 20)])),
+            4 => Some(HashMap::from([(BlockType::Red, 5), (BlockType::Blue, 500)])),
             _ => None,
         }
     }
@@ -110,7 +110,10 @@ impl ShopStats {
                 (BlockType::LightPurple, 10),
             ])),
             3 => Some(HashMap::from([(BlockType::Red, 10), (BlockType::Pink, 10)])),
-            4 => Some(HashMap::from([(BlockType::Orange, 1)])),
+            4 => Some(HashMap::from([
+                (BlockType::Orange, 5),
+                (BlockType::Pink, 10),
+            ])),
             _ => None,
         }
     }
