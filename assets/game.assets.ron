@@ -45,7 +45,7 @@
         path: "textures/shop_no_writting.png"
     ),
     "damage_icon": File(
-        path: "textures/Icon_ball_damage.png"
+        path: "textures/ICON_ball_damage.png"
     ),
     "speed_icon": File(
         path: "textures/ICON_ufo_dash.png"
