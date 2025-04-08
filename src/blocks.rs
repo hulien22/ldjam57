@@ -3,6 +3,7 @@ use std::time::Duration;
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::{Collider, CollisionGroups, Friction, Restitution, RigidBody};
 use noise::{Fbm, MultiFractal, NoiseFn, Perlin, RidgedMulti};
+use rand::Rng;
 use strum_macros::EnumIter;
 
 use crate::{
@@ -17,7 +18,8 @@ pub struct BlocksPlugin;
 
 impl Plugin for BlocksPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::Game), spawn_blocks)
+        app.insert_resource(Seed(rand::rng().random_range(0..17851437)))
+            .add_systems(OnEnter(AppState::Game), spawn_blocks)
             .add_systems(
                 FixedUpdate,
                 check_for_new_block_depths.run_if(in_state(AppState::Game)),
@@ -27,6 +29,9 @@ impl Plugin for BlocksPlugin {
     }
 }
 
+#[derive(Resource)]
+pub struct Seed(u32);
+
 pub const WALL_WIDTH: f32 = 10.0;
 pub const BLOCK_SIZE: f32 = 30.0;
 pub const BLOCK_COUNT_WIDTH: usize = 40;
@@ -34,10 +39,10 @@ pub const BLOCK_GAP_SIZE: f32 = 0.0;
 pub const BLOCK_GROUP_OFFSET: f32 =
     (BLOCK_SIZE * BLOCK_COUNT_WIDTH as f32 + BLOCK_GAP_SIZE * (BLOCK_COUNT_WIDTH - 1) as f32) / 2.0;
 
-fn spawn_blocks(mut commands: Commands) {
+fn spawn_blocks(mut commands: Commands, seed: Res<Seed>) {
     for i in 0..BLOCK_COUNT_WIDTH {
         for j in 0..BLOCK_COUNT_WIDTH {
-            spawn_block_at(j, i, &mut commands);
+            spawn_block_at(j, i, &mut commands, seed.0);
         }
     }
 
@@ -90,11 +95,14 @@ fn spawn_blocks(mut commands: Commands) {
     //     });
 }
 
-fn spawn_block_at(j: usize, i: usize, commands: &mut Commands) {
-    let block_type = pick_block_type(Vec2 {
-        x: j as f32,
-        y: i as f32,
-    });
+fn spawn_block_at(j: usize, i: usize, commands: &mut Commands, seed: u32) {
+    let block_type = pick_block_type(
+        Vec2 {
+            x: j as f32,
+            y: i as f32,
+        },
+        seed,
+    );
     commands.spawn((
         Transform::from_xyz(
             -BLOCK_GROUP_OFFSET + j as f32 * (BLOCK_SIZE + BLOCK_GAP_SIZE) + BLOCK_SIZE / 2.0,
@@ -117,6 +125,7 @@ fn check_for_new_block_depths(
     balls_query: Query<&Transform, With<Ball>>,
     mut deepest_layer: Local<usize>,
     mut commands: Commands,
+    seed: Res<Seed>,
 ) {
     if *deepest_layer == 0 {
         *deepest_layer = BLOCK_COUNT_WIDTH;
@@ -145,7 +154,7 @@ fn check_for_new_block_depths(
         println!("Current depth: {}", current_depth);
         for l in *deepest_layer..current_depth {
             for j in 0..BLOCK_COUNT_WIDTH {
-                spawn_block_at(j, l, &mut commands);
+                spawn_block_at(j, l, &mut commands, seed.0);
             }
         }
         *deepest_layer = current_depth;
@@ -280,65 +289,60 @@ impl BlockType {
     }
 }
 
-fn pick_block_type(position: Vec2) -> BlockType {
-    let a = Fbm::<Perlin>::new(123)
+fn pick_block_type(position: Vec2, seed: u32) -> BlockType {
+    let a = Fbm::<Perlin>::new(seed + 123)
         .set_frequency(0.4)
         .get([position.x as f64, position.y as f64]);
-    let b = Fbm::<Perlin>::new(12412)
+    let b = Fbm::<Perlin>::new(seed + 12412)
         .set_frequency(0.04)
         .get([position.x as f64, position.y as f64]);
-    let c = Fbm::<Perlin>::new(123546)
+    let c = Fbm::<Perlin>::new(seed + 123546)
         .set_frequency(0.08)
         .set_lacunarity(2.5)
         .set_octaves(3)
         .get([position.x as f64, position.y as f64]);
-    let d = Fbm::<Perlin>::new(1212)
+    let d = Fbm::<Perlin>::new(seed + 1212)
         .set_frequency(0.04)
         .get([position.x as f64, position.y as f64]);
-    let e = Fbm::<Perlin>::new(124363)
-        .set_frequency(0.04)
-        .get([position.x as f64, position.y as f64]);
-    let f = RidgedMulti::<Perlin>::new(361232412)
-        .set_frequency(0.04)
-        //.set_octaves(3)
-        .get([position.x as f64, position.y as f64]);
-    let g = Fbm::<Perlin>::new(6266123)
-        .set_frequency(0.04)
-        .get([position.x as f64, position.y as f64]);
-    let h = Fbm::<Perlin>::new(31362412)
+    let e = Fbm::<Perlin>::new(seed + 124363)
         .set_frequency(0.04)
         .get([position.x as f64, position.y as f64]);
 
-    if g > 0.65 {
+    let f = RidgedMulti::<Perlin>::new(seed + 361232412)
+        .set_frequency(0.04)
+        //.set_octaves(3)
+        .get([position.x as f64, position.y as f64]);
+    let g = RidgedMulti::<Perlin>::new(seed + 6266123)
+        .set_frequency(0.02)
+        //.set_octaves(3)
+        .get([position.x as f64, position.y as f64]);
+    let blend = 10.0
+        * Fbm::<Perlin>::new(seed + 123)
+            .set_frequency(0.4)
+            .get([position.x as f64, position.y as f64]) as f32;
+
+    if a > 0.65 && blend + position.y < 100.0 {
         BlockType::Blue
-    } else if b > 0.65 {
+    } else if b > 0.65 && blend + position.y > 50.0 {
         BlockType::LightBlue
     } else if c > 0.65 {
         BlockType::LightPurple
     } else if d > 0.65 {
-        // if position.y > 80.0 {
-        BlockType::Red
-        // } else {
-        // BlockType::Pink
-        // }
-    } else if e > 0.65 {
-        // if position.y > 160.0 {
+        BlockType::Pink
+    } else if e > 0.62 && blend + position.y > 50.0 {
         BlockType::Orange
-        // } else {
-        // BlockType::LightPurple
-        // }
     } else if f > 0.7 {
         BlockType::Purple
-    } else if a > 0.65 {
-        BlockType::Pink
+    } else if g > 0.68 && blend + position.y > 50.0 {
+        BlockType::Red
     } else {
-        pick_base_block_type(position)
+        pick_base_block_type(position, seed)
     }
 }
 
-fn pick_base_block_type(position: Vec2) -> BlockType {
+fn pick_base_block_type(position: Vec2, seed: u32) -> BlockType {
     let blend = 10.0
-        * Fbm::<Perlin>::new(123)
+        * Fbm::<Perlin>::new(seed + 123)
             .set_frequency(0.4)
             .get([position.x as f64, position.y as f64]) as f32;
     if blend + position.y < 50.0 {
