@@ -317,9 +317,9 @@ fn pick_block_type(position: Vec2) -> BlockType {
         BlockType::LightPurple
     } else if d > 0.65 {
         // if position.y > 80.0 {
-        // BlockType::Red
+        BlockType::Red
         // } else {
-        BlockType::Pink
+        // BlockType::Pink
         // }
     } else if e > 0.65 {
         // if position.y > 160.0 {
