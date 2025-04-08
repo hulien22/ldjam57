@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{core_pipeline::bloom, prelude::*};
 use bevy_rapier2d::prelude::{
     ActiveCollisionTypes, ActiveEvents, Ccd, CoefficientCombineRule, Collider, CollisionEvent,
     CollisionGroups, Damping, Friction, GravityScale, LockedAxes, Restitution, RigidBody, Velocity,
@@ -142,7 +142,7 @@ fn override_physics(
         query.iter_mut()
     {
         // Check if the ball is outside the screen bounds
-        if transform.translation.y > 1000.0 {
+        if transform.translation.y > 3000.0 {
             commands.entity(entity).despawn_recursive();
             continue;
         }
@@ -214,6 +214,7 @@ fn spawn_trail(
                         )),
                     z_index: -5.0,
                     color: bloom_color,
+                    target_color: bloom_color.with_alpha(0.0),
                     size: Vec2::new(3., 3.),
                     target_scale: Vec3::ONE,
                     duration: Duration::from_millis(500),

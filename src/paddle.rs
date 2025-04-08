@@ -13,7 +13,7 @@ use crate::{
     app_state::AppState,
     asset_loading::GameImageAssets,
     ball::{CollectedResources, spawn_ball},
-    blocks::BLOCK_SIZE,
+    blocks::{BLOCK_GROUP_OFFSET, BLOCK_SIZE},
     particles::{BoxParticle, BoxParticlesEvent},
     physics::{BALL_GROUP, BLOCK_GROUP, PADDLE_GROUP, PADDLE_SHOP_GROUP, WALL_GROUP},
     shop::{ShopItem, ShopStats, try_buy},
@@ -206,6 +206,7 @@ fn move_paddle(
     assets: Res<GameImageAssets>,
     mut shop_panel_query: Query<(&ShopPanel)>,
     mut paddle_bottom_query: Query<(&PaddleBottomSprite, &mut Sprite)>,
+    camera_query: Query<(Entity, &OrthographicProjection), With<Camera>>,
     mut stats: ResMut<ShopStats>,
 ) {
     let (
@@ -216,6 +217,8 @@ fn move_paddle(
         mut num_balls,
         mut collected_resources,
     ) = query.get_single_mut().expect("Failed to get paddle entity");
+    let (_, orthoproj) = camera_query.get_single().expect("Need single camera.");
+    let half_screen_size = orthoproj.area.height() / 2.0;
 
     // lerp to target velocity
     let mut target_lin_vel: Vec2 = Vec2::ZERO;
@@ -263,9 +266,33 @@ fn move_paddle(
             }
 
             if shop_panel.is_refresh {
+                let init_balls = num_balls.0;
                 // refresh ball count
                 num_balls.0 = stats.capacity() as u32;
                 commands.trigger(UpdateStatsBarBallsEvent { balls: num_balls.0 });
+
+                // particles
+                let mut rng = rand::rng();
+                for _ in init_balls..num_balls.0 {
+                    commands.trigger(BoxParticlesEvent {
+                        init_position: transform.translation.truncate()
+                            + Vec2::new(
+                                rng.random_range(-20.0..20.0),
+                                rng.random_range(-20.0..20.0),
+                            ),
+                        target_position: Vec2::new(
+                            -BLOCK_GROUP_OFFSET,
+                            transform.translation.y + half_screen_size + 10.0,
+                        ),
+                        z_index: -5.0,
+                        color: Color::WHITE,
+                        target_color: Color::WHITE,
+                        size: Vec2::new(10., 10.),
+                        target_scale: Vec3::ONE * 1.2,
+                        duration: Duration::from_millis(500),
+                    });
+                }
+
                 break;
             }
 
@@ -349,6 +376,7 @@ fn spawn_particles(
         target_position: transform.translation.truncate() - velocity.linvel.normalize(),
         z_index: -10.0,
         color: Color::srgb(0.4, 0.2, 0.2),
+        target_color: Color::srgba(0.4, 0.2, 0.2, 0.0),
         size: Vec2::new(10., 10.),
         target_scale: Vec3::ZERO,
         duration: Duration::from_secs(2),

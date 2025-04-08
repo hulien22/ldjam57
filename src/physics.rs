@@ -1,15 +1,19 @@
+use std::time::Duration;
+
 use bevy::{ecs::query, prelude::*};
 use bevy_rapier2d::{
     plugin::{NoUserData, RapierPhysicsPlugin},
     prelude::*,
     render::RapierDebugRenderPlugin,
 };
+use rand::Rng;
 
 use crate::{
     app_state::AppState,
     ball::{self, CollectedResources},
-    blocks::{Block, BlockType, HitPoints, block_break},
+    blocks::{BLOCK_GROUP_OFFSET, Block, BlockType, HitPoints, block_break},
     paddle::Paddle,
+    particles::BoxParticlesEvent,
     shop::ShopStats,
     shoppanel::{ShopPanel, UpdateShopPanelsEvent},
     statsbar::UpdateStatsBarResourcesEvent,
@@ -37,10 +41,11 @@ impl Plugin for PhysicsPlugin {
 
 fn process_collisions(
     mut reader: EventReader<CollisionEvent>,
-    mut ball_query: Query<(Entity, &mut CollectedResources), With<Ball>>,
+    mut ball_query: Query<(Entity, &Transform, &mut CollectedResources), With<Ball>>,
     mut paddle_query: Query<(Entity, &mut CollectedResources), (With<Paddle>, Without<Ball>)>,
     mut block_query: Query<(Entity, &mut HitPoints, &Transform, &Collider, &Block), Without<Ball>>,
     mut shop_panel_query: Query<(Entity, &mut ShopPanel)>,
+    camera_query: Query<(Entity, &OrthographicProjection), With<Camera>>,
     shop_stats: Res<ShopStats>,
     mut commands: Commands,
 ) {
@@ -84,6 +89,7 @@ fn process_collisions(
                         rhs,
                         &mut commands,
                         &mut ball_query,
+                        &camera_query,
                     );
                 } else if let Ok((entity, mut collected_resources)) = paddle_query.get_mut(rhs) {
                     on_paddle_hit(
@@ -92,6 +98,7 @@ fn process_collisions(
                         lhs,
                         &mut commands,
                         &mut ball_query,
+                        &camera_query,
                     );
                 }
                 // Process shop panel collisions.
@@ -124,11 +131,11 @@ fn on_block_hit(
     entity: Entity,
     other: Entity,
     commands: &mut Commands,
-    ball_query: &mut Query<(Entity, &mut CollectedResources), With<Ball>>,
+    ball_query: &mut Query<(Entity, &Transform, &mut CollectedResources), With<Ball>>,
     shop_stats: &Res<ShopStats>,
 ) {
     // skip if we aren't hitting a ball
-    if let Ok((_, mut collected_resources)) = ball_query.get_mut(other) {
+    if let Ok((_, _, mut collected_resources)) = ball_query.get_mut(other) {
         match hitpoints.damage(shop_stats.damage()) {
             Ok(_) => {}
             Err(_) => {
@@ -148,10 +155,51 @@ fn on_paddle_hit(
     entity: Entity,
     other: Entity,
     commands: &mut Commands,
-    ball_query: &mut Query<(Entity, &mut CollectedResources), With<Ball>>,
+    ball_query: &mut Query<(Entity, &Transform, &mut CollectedResources), With<Ball>>,
+    camera_query: &Query<(Entity, &OrthographicProjection), With<Camera>>,
 ) {
+    let (_, orthoproj) = camera_query.get_single().expect("Need single camera.");
+    let half_screen_size = orthoproj.area.height() / 2.0;
+
     // check if collision is with a ball
-    if let Ok((_, mut ball_collected_resources)) = ball_query.get_mut(other) {
+    if let Ok((_, ball_transform, mut ball_collected_resources)) = ball_query.get_mut(other) {
+        let mut rng = rand::rng();
+        for (block_type, count) in &ball_collected_resources.counts {
+            let num_spawns: u32;
+            match count {
+                0 => continue,
+                1..=10 => {
+                    num_spawns = 3;
+                }
+                11..=50 => num_spawns = 6,
+                _ => num_spawns = 9,
+            }
+
+            let bloom_color = Color::srgba(
+                block_type.colour().to_srgba().red * 1.1,
+                block_type.colour().to_srgba().green * 1.1,
+                block_type.colour().to_srgba().blue * 1.1,
+                1.0,
+            );
+
+            for _ in 0..num_spawns {
+                commands.trigger(BoxParticlesEvent {
+                    init_position: ball_transform.translation.truncate()
+                        + Vec2::new(rng.random_range(-5.0..5.0), rng.random_range(-5.0..5.0)),
+                    target_position: Vec2::new(
+                        BLOCK_GROUP_OFFSET,
+                        ball_transform.translation.y + half_screen_size + 10.0,
+                    ),
+                    z_index: 5.0,
+                    color: bloom_color,
+                    target_color: bloom_color,
+                    size: Vec2::new(10., 10.),
+                    target_scale: Vec3::ONE * 1.2,
+                    duration: Duration::from_millis(500),
+                });
+            }
+        }
+
         // add collected resources to paddle
         collected_resources.combine(&*ball_collected_resources);
         // clear the ball's collected resources
